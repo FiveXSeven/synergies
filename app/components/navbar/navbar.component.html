@@ -1,0 +1,42 @@
+<header>
+  <div class="logo">
+    <img src="images/synergie africa.jpeg" alt="Logo Synergies Africa" width="50" height="50">
+    <span>Synergies Africa</span>
+  </div>
+
+  <nav>
+    <button id="menu-toggle" [attr.aria-expanded]="isMenuOpen" aria-label="Menu" (click)="toggleMenu()">
+      <span class="sr-only">Menu</span>
+      <span class="hamburger" [class.active]="isMenuOpen"></span>
+    </button>
+
+    <ul id="main-menu" [class.active]="isMenuOpen" (click)="$event.stopPropagation()">
+      <li>
+        <a routerLink="/" [class.active]="activeLink === 'Accueil'" (click)="setActive('Accueil')">
+          Accueil
+        </a>
+      </li>
+      <li>
+        <a routerLink="/publi-reportages" [class.active]="activeLink === 'Publi-Reportages'"
+          (click)="setActive('Publi-Reportages')">
+          Publi-Reportages
+        </a>
+      </li>
+      <li>
+        <a routerLink="/agro-echos" [class.active]="activeLink === 'AGRO-ECHOS'" (click)="setActive('AGRO-ECHOS')">
+          AGRO-ECHOS
+        </a>
+      </li>
+      <li>
+        <a routerLink="/publicite" [class.active]="activeLink === 'Publicité'" (click)="setActive('Publicité')">
+          Publicité
+        </a>
+      </li>
+      <li>
+        <a routerLink="/contact" [class.active]="activeLink === 'Contact'" (click)="setActive('Contact')">
+          Contact
+        </a>
+      </li>
+    </ul>
+  </nav>
+</header>
