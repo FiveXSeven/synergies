@@ -1,0 +1,187 @@
+@use "../../../variables" as *;
+
+/* Section contenu du manifeste */
+.manifesto-full-content {
+    padding: 3rem 0;
+    background-color: white;
+    color: $text-color;
+
+    .container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 1rem;
+    }
+
+    h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 2rem;
+        color: darken($primary-color, 20%);
+        letter-spacing: 0.5px;
+        position: relative;
+        padding-bottom: 1rem;
+
+        &:after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: $primary-color;
+        }
+    }
+
+    .manifesto-text {
+        margin-top: 2rem;
+
+        p {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+
+            &:first-of-type {
+                font-size: 1.1rem;
+                font-weight: 500;
+                color: darken($text-color, 15%);
+            }
+        }
+
+        h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: darken($primary-color, 10%);
+        }
+
+        .call-to-action {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            margin: 2.5rem 0;
+            font-style: italic;
+        }
+
+        .manifesto-cta {
+            text-align: center;
+            margin: 3rem 0 1rem;
+
+            .btn {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0.75rem 1.5rem;
+                border-radius: 50px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                text-decoration: none;
+
+                i {
+                    margin-right: 0.5rem;
+                }
+            }
+
+            .btn-primary {
+                background: linear-gradient(
+                    135deg,
+                    darken($primary-color, 10%) 0%,
+                    $primary-color 100%
+                );
+                color: white;
+                border: none;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+                &:hover {
+                    background: linear-gradient(
+                        135deg,
+                        darken($primary-color, 15%) 0%,
+                        darken($primary-color, 5%) 100%
+                    );
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+                }
+            }
+        }
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    .manifesto-full-content {
+        padding: 4rem 0;
+
+        .container {
+            max-width: 90%;
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .manifesto-text {
+            p {
+                font-size: 1.05rem;
+
+                &:first-of-type {
+                    font-size: 1.2rem;
+                }
+            }
+
+            h3 {
+                font-size: 1.5rem;
+            }
+
+            .call-to-action {
+                font-size: 1.3rem;
+            }
+        }
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .manifesto-full-content {
+        padding: 5rem 0;
+
+        .container {
+            max-width: 850px;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+        }
+
+        .manifesto-text {
+            p {
+                font-size: 1.1rem;
+
+                &:first-of-type {
+                    font-size: 1.25rem;
+                }
+            }
+
+            h3 {
+                font-size: 1.6rem;
+            }
+
+            .call-to-action {
+                font-size: 1.4rem;
+            }
+        }
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .manifesto-full-content {
+        padding: 6rem 0;
+
+        .container {
+            max-width: 1000px;
+        }
+    }
+}

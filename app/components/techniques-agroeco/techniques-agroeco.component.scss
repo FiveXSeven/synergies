@@ -1,0 +1,210 @@
+@use "../../../variables" as *;
+
+/* Section Techniques Agroécologiques */
+.techniques-section {
+  padding: 3rem 0;
+  background-color: #f5fff7;
+}
+
+.techniques-section h2 {
+  text-align: center;
+  color: $primary-color;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.techniques-section h2::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background-color: $primary-color;
+  margin: 0.8rem auto 1.5rem;
+}
+
+.techniques-intro {
+  text-align: center;
+  max-width: 90%;
+  margin: 0 auto 2rem;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: $text-color;
+  padding: 0 1rem;
+}
+
+.techniques-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.technique-card {
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.technique-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.technique-image {
+  position: relative;
+  height: 180px;
+  overflow: hidden;
+}
+
+.technique-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.technique-card:hover .technique-image img {
+  transform: scale(1.05);
+}
+
+.technique-tag {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  background-color: $accent-color;
+  color: white;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0 4px 4px 0;
+}
+
+.technique-content {
+  padding: 1.25rem;
+}
+
+.technique-content h3 {
+  color: $primary-color;
+  margin-bottom: 0.7rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.technique-content p {
+  color: $text-color;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Small devices (small phones, 480px and up) */
+@media (min-width: 480px) {
+  .techniques-section {
+    padding: 3.5rem 0;
+  }
+
+  .techniques-section h2 {
+    font-size: 2rem;
+  }
+
+  .techniques-intro {
+    max-width: 85%;
+    font-size: 1.05rem;
+  }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+  .techniques-section {
+    padding: 4rem 0;
+  }
+
+  .techniques-section h2 {
+    font-size: 2.2rem;
+  }
+
+  .techniques-section h2::after {
+    width: 70px;
+  }
+
+  .techniques-intro {
+    max-width: 80%;
+    margin: 0 auto 2.5rem;
+    font-size: 1.1rem;
+  }
+
+  .techniques-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.8rem;
+    margin-bottom: 2.5rem;
+    padding: 0 1.5rem;
+  }
+
+  .technique-image {
+    height: 190px;
+  }
+
+  .technique-content h3 {
+    font-size: 1.3rem;
+  }
+
+  .technique-content p {
+    font-size: 0.95rem;
+  }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+  .techniques-section {
+    padding: 5rem 0;
+  }
+
+  .techniques-intro {
+    max-width: 700px;
+    margin: 0 auto 3rem;
+  }
+
+  .techniques-grid {
+    gap: 2rem;
+    margin-bottom: 3rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0;
+  }
+
+  .technique-image {
+    height: 200px;
+  }
+
+  .technique-content {
+    padding: 1.5rem;
+  }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+  .techniques-grid {
+    max-width: 1100px;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .techniques-intro {
+    max-width: 800px;
+  }
+
+  .technique-tag {
+    font-size: 0.8rem;
+  }
+}
+
+/* XXL devices (extra large desktops, 1400px and up) */
+@media (min-width: 1400px) {
+  .techniques-grid {
+    max-width: 1300px;
+  }
+}

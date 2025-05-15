@@ -12,6 +12,10 @@
     text-align: center;
     position: relative;
     overflow: hidden;
+    height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     .container {
         position: relative;

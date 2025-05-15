@@ -1,1 +1,25 @@
-<p>techniques-agroeco works!</p>
+<section class="techniques-section">
+  <div class="container">
+    <h2>Techniques Agroécologiques</h2>
+
+    <p class="techniques-intro">
+      Découvrez les méthodes adaptées au contexte ouest-africain pour une agriculture
+      durable et résiliente.
+    </p>
+
+    <div class="techniques-grid">
+      @for (technique of techniques; track technique.titre) {
+      <div class="technique-card">
+        <div class="technique-image">
+          <span class="technique-tag">Pratique populaire</span>
+          <img [src]="technique.image" [alt]="technique.alt" width="100%" height="auto">
+        </div>
+        <div class="technique-content">
+          <h3>{{ technique.titre }}</h3>
+          <p>{{ technique.description }}</p>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</section>
