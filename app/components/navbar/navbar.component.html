@@ -12,12 +12,12 @@
 
     <ul id="main-menu" [class.active]="isMenuOpen" (click)="$event.stopPropagation()">
       <li>
-        <a routerLink="/" [class.active]="activeLink === 'Accueil'" (click)="setActive('Accueil')">
+        <a routerLink="" [class.active]="activeLink === 'Accueil'" (click)="setActive('Accueil')">
           Accueil
         </a>
       </li>
       <li>
-        <a routerLink="/publi-reportages" [class.active]="activeLink === 'Publi-Reportages'"
+        <a routerLink="reportages" [class.active]="activeLink === 'Publi-Reportages'"
           (click)="setActive('Publi-Reportages')">
           Publi-Reportages
         </a>

@@ -13,8 +13,8 @@ import { FooterComponent } from "./components/footer/footer.component";
         NavbarComponent,
         HeroComponent,
         AboutComponent,
-      TechniquesAgroecoComponent,
-        FooterComponent
+        TechniquesAgroecoComponent,
+        FooterComponent,
     ],
     templateUrl: "./app.component.html",
     styleUrl: "./app.component.scss",

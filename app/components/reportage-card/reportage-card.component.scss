@@ -1,0 +1,184 @@
+@use "../../../variables" as *;
+
+.reportages-list {
+  padding: 2rem 1rem;
+
+  @media (min-width: 768px) {
+    padding: 3rem 2rem;
+  }
+
+  @media (min-width: 992px) {
+    padding: 4rem 0;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+}
+
+.reportage-card {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    margin-bottom: 2.5rem;
+  }
+
+  @media (min-width: 992px) {
+    margin-bottom: 3rem;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.reportage-image {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: 40%;
+    height: auto;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+}
+
+.reportage-card:hover .reportage-image img {
+  transform: scale(1.05);
+}
+
+.reportage-tag {
+  position: absolute;
+  top: 15px;
+  left: 0;
+  background-color: $accent-color;
+  color: white;
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 0 4px 4px 0;
+
+  @media (min-width: 768px) {
+    font-size: 0.9rem;
+    padding: 0.5rem 1.2rem;
+  }
+}
+
+.reportage-content {
+  padding: 1.5rem;
+  width: 100%;
+
+  @media (min-width: 768px) {
+    width: 60%;
+    padding: 2rem;
+  }
+}
+
+.reportage-content h2 {
+  color: $primary-color;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  text-align: left;
+
+  @media (min-width: 768px) {
+    font-size: 1.7rem;
+  }
+
+  @media (min-width: 992px) {
+    font-size: 1.8rem;
+  }
+
+  &::after {
+    content: "";
+    display: block;
+    height: 2px;
+    background-color: $primary-color;
+    margin: 0.5rem 0 1rem;
+    width: 50px;
+  }
+}
+
+.reportage-meta {
+  color: #666;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+
+  @media (min-width: 768px) {
+    font-size: 0.9rem;
+  }
+
+  i {
+    color: $primary-color;
+    margin-right: 0.3rem;
+  }
+}
+
+.reportage-content p {
+  margin-bottom: 1.2rem;
+  line-height: 1.6;
+  font-size: 0.95rem;
+
+  @media (min-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.share-buttons {
+  display: flex;
+  gap: 0.6rem;
+  margin: 1.2rem 0;
+
+  @media (min-width: 768px) {
+    gap: 0.8rem;
+    margin: 1.5rem 0;
+  }
+}
+
+.share-button {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  @media (min-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    gap: 0.5rem;
+  }
+
+  &:hover {
+    background-color: #e0e0e0;
+  }
+
+  &[data-network="facebook"]:hover {
+    background-color: #3b5998;
+    color: white;
+  }
+
+  &[data-network="twitter"]:hover {
+    background-color: #1da1f2;
+    color: white;
+  }
+}

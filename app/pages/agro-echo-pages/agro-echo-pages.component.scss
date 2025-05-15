@@ -1,0 +1,81 @@
+@use "../../../variables" as *;
+
+.page-header {
+    background: linear-gradient(
+        135deg,
+        darken($primary-color, 5%) 10%,
+        lighten($primary-color, 10%) 100%
+    );
+    color: white;
+    text-align: center;
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .container {
+        position: relative;
+        z-index: 2;
+        padding: 0 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    p {
+        font-size: 1rem;
+        max-width: 100%;
+        margin: 0 auto;
+        line-height: 1.5;
+        padding: 0 1rem;
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    .page-header {
+        padding: 3rem 2rem;
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1.2rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            max-width: 80%;
+        }
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .page-header {
+        padding: 3.5rem 0;
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .page-header {
+        padding: 4rem 0;
+    }
+}
