@@ -1,0 +1,199 @@
+@use "../../../variables" as *;
+/* Variables */
+$primary-color: #4e73df;
+$secondary-color: #f8f9fa;
+$white: #ffffff;
+$text-dark: #555;
+$shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+$border-radius: 10px;
+$container-max-width: 1200px;
+$spacing-sm: 0.8rem;
+$spacing-md: 1rem;
+$spacing-lg: 1.5rem;
+$spacing-xl: 3rem;
+$spacing-xxl: 4rem;
+
+/* Breakpoints */
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+/* Page header */
+.page-header {
+    background: linear-gradient(
+        135deg,
+        darken($primary-color, 5%) 10%,
+        lighten($primary-color, 10%) 100%
+    );
+    color: white;
+    text-align: center;
+    padding: 2rem 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .container {
+        position: relative;
+        z-index: 2;
+        padding: 0 1rem;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    p {
+        font-size: 1rem;
+        max-width: 100%;
+        margin: 0 auto;
+        line-height: 1.5;
+        padding: 0 1rem;
+    }
+}
+
+/* Section de contact */
+.contact-section {
+  padding: $spacing-xxl 0;
+  background-color: $secondary-color;
+}
+
+.contact-container {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: 0 $spacing-lg;
+}
+
+/* Cartes d'information avec flexbox (2 par ligne) */
+.contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  width: 100%;
+}
+
+.info-card {
+  background-color: $white;
+  border-radius: $border-radius;
+  padding: $spacing-lg;
+  box-shadow: $shadow;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: calc(50% - $spacing-lg/2);
+  margin-bottom: 0; /* Suppression de la marge car nous utilisons gap */
+
+  @media (max-width: $breakpoint-md) {
+    width: 100%; /* En version mobile, on passe à une seule colonne */
+  }
+}
+
+.info-icon {
+  width: 60px;
+  height: 60px;
+  background-color: $primary-color;
+  color: $white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $spacing-md;
+  font-size: 1.5rem;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 50px;
+    height: 50px;
+    font-size: 1.3rem;
+  }
+}
+
+.info-card h3 {
+  color: $primary-color;
+  margin-bottom: $spacing-sm;
+  font-size: 1.2rem;
+}
+
+.info-card p {
+  color: $text-dark;
+  line-height: 1.6;
+}
+
+/* Réseaux sociaux */
+.social-contact {
+  background-color: $white;
+  border-radius: $border-radius;
+  padding: $spacing-lg;
+  box-shadow: $shadow;
+  text-align: center;
+  width: 100%; /* Pour prendre toute la largeur */
+  margin-top: $spacing-lg;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $spacing-md;
+  }
+}
+
+.social-contact h3 {
+  color: $primary-color;
+  margin-bottom: $spacing-md;
+  font-size: 1.2rem;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $spacing-sm;
+  }
+}
+
+.social-icons a {
+  width: 45px;
+  height: 45px;
+  background-color: #f5f5f5;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-color;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background-color: $primary-color;
+    color: $white;
+    transform: translateY(-3px);
+  }
+}
+
+/* Media queries supplémentaires pour être totalement responsive */
+@media (max-width: $breakpoint-md) {
+  .contact-container {
+    padding: 0 $spacing-md;
+  }
+
+  .info-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .info-card p {
+    font-size: 0.9rem;
+  }
+}
