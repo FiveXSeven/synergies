@@ -2,12 +2,20 @@ import {
     ApplicationConfig,
     provideZoneChangeDetection,
     LOCALE_ID,
-    EnvironmentProviders,
+    // EnvironmentProviders, // Plus besoin d'importer explicitement si non utilisé ailleurs
+    // importProvidersFrom, // Plus besoin de celui-ci pour Firebase ici
 } from "@angular/core";
 import { provideRouter, withInMemoryScrolling } from "@angular/router";
 import { routes } from "./app.routes";
+
+// Imports pour Firebase (provider functions)
 import { initializeApp, provideFirebaseApp } from "@angular/fire/app";
 import { getAuth, provideAuth } from "@angular/fire/auth";
+// Si vous utilisez Firestore plus tard :
+// import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+// Si vous utilisez Storage plus tard :
+// import { getStorage, provideStorage } from '@angular/fire/storage';
+
 import { environment } from "../environments/environment";
 
 export const appConfig: ApplicationConfig = {
@@ -16,25 +24,16 @@ export const appConfig: ApplicationConfig = {
         provideRouter(
             routes,
             withInMemoryScrolling({
-                // Ajoutez cette fonction
-                scrollPositionRestoration: "top", // Option clé pour remonter en haut
-                anchorScrolling: "enabled", // Optionnel: pour gérer le défilement vers les ancres #
+                scrollPositionRestoration: "top",
+                anchorScrolling: "enabled",
             })
         ),
         { provide: LOCALE_ID, useValue: "fr-FR" },
 
-        importProvidersFrom([
-            provideFirebaseApp(() => initializeApp(environment.firebase)),
-            provideAuth(() => getAuth()),
-            // provideFirestore(() => getFirestore()),
-            // provideStorage(() => getStorage()),
-        ]),
+        // Intégration directe des providers Firebase
+        provideFirebaseApp(() => initializeApp(environment.firebase)),
+        provideAuth(() => getAuth()),
+        // provideFirestore(() => getFirestore()), // Décommentez si vous utilisez Firestore
+        // provideStorage(() => getStorage())      // Décommentez si vous utilisez Storage
     ],
 };
-function importProvidersFrom(
-    arg0: EnvironmentProviders[]
-):
-    | import("@angular/core").Provider
-    | import("@angular/core").EnvironmentProviders {
-    throw new Error("Function not implemented.");
-}
