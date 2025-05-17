@@ -1,31 +1,88 @@
 <section class="dashboard">
   <h1><i class="fas fa-plus"></i> Ajouter une publication</h1>
-  <form class="publication-form" action="#" method="post" enctype="multipart/form-data">
-    <label for="title">Titre de la publication</label>
-    <input type="text" id="title" name="title" required>
 
-    <label for="type">Type de publication</label>
-    <select id="type" name="type" required>
-      <option value="">-- Choisir un type --</option>
-      <option value="publi">Publication</option>
-      <option value="agro">Agro Echos</option>
-    </select>
+  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
 
-    <label for="description">Description</label>
-    <textarea id="description" name="description" rows="3" required></textarea>
+  <form class="publication-form" [formGroup]="publicationForm" (ngSubmit)="onSubmit()">
+    <div>
+      <label for="title">Titre de la publication</label>
+      <input type="text" id="title" formControlName="title">
+      <div
+        *ngIf="publicationForm.get('title')?.invalid && (publicationForm.get('title')?.dirty || publicationForm.get('title')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('title')?.errors?.['required']">Le titre est requis.</small>
+      </div>
+    </div>
 
-    <label for="content">Contenu</label>
-    <textarea id="content" name="content" rows="8" required></textarea>
+    <div>
+      <label for="type">Type de publication</label>
+      <select id="type" formControlName="type">
+        <option value="">-- Choisir un type --</option>
+        <option value="publi">Publication (Publi-reportage)</option>
+        <option value="agro">Agro Echos</option>
+      </select>
+      <div
+        *ngIf="publicationForm.get('type')?.invalid && (publicationForm.get('type')?.dirty || publicationForm.get('type')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('type')?.errors?.['required']">Le type est requis.</small>
+      </div>
+    </div>
 
-    <label for="location">Lieu de l'événement</label>
-    <input type="text" id="location" name="location" required>
+    <div>
+      <label for="description">Description</label>
+      <textarea id="description" formControlName="description" rows="3"></textarea>
+      <div
+        *ngIf="publicationForm.get('description')?.invalid && (publicationForm.get('description')?.dirty || publicationForm.get('description')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('description')?.errors?.['required']">La description est requise.</small>
+      </div>
+    </div>
 
-    <label for="date">Date de l'événement</label>
-    <input type="date" id="date" name="date" required>
+    <div>
+      <label for="content">Contenu</label>
+      <textarea id="content" formControlName="content" rows="8"></textarea>
+      <div
+        *ngIf="publicationForm.get('content')?.invalid && (publicationForm.get('content')?.dirty || publicationForm.get('content')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('content')?.errors?.['required']">Le contenu est requis.</small>
+      </div>
+    </div>
 
-    <label for="photos">Ajouter des photos (max 4)</label>
-    <input type="file" id="photos" name="photos[]" accept="image/*" multiple required>
+    <div>
+      <label for="location">Lieu de l'événement</label>
+      <input type="text" id="location" formControlName="location">
+      <div
+        *ngIf="publicationForm.get('location')?.invalid && (publicationForm.get('location')?.dirty || publicationForm.get('location')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('location')?.errors?.['required']">Le lieu est requis.</small>
+      </div>
+    </div>
 
-    <button type="submit"><i class="fas fa-paper-plane"></i> Publier</button>
+    <div>
+      <label for="date">Date de l'événement</label>
+      <input type="date" id="date" formControlName="date">
+      <div
+        *ngIf="publicationForm.get('date')?.invalid && (publicationForm.get('date')?.dirty || publicationForm.get('date')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('date')?.errors?.['required']">La date est requise.</small>
+      </div>
+    </div>
+
+    <div>
+      <label for="photos">Ajouter des photos (max 4)</label>
+      <input type="file" id="photos" (change)="onFileSelected($event)" accept="image/*" multiple>
+      <!-- Note: formControlName="photos" est sur le groupe, la validation se fait là -->
+      <div
+        *ngIf="publicationForm.get('photos')?.invalid && (publicationForm.get('photos')?.dirty || publicationForm.get('photos')?.touched)"
+        class="error-message">
+        <small *ngIf="publicationForm.get('photos')?.errors?.['required']">Au moins une photo est requise.</small>
+        <small *ngIf="publicationForm.get('photos')?.errors?.['maxFilesExceeded']">Maximum 4 photos autorisées.</small>
+      </div>
+    </div>
+
+    <button type="submit" [disabled]="isLoading || publicationForm.invalid">
+      <i class="fas fa-paper-plane"></i> {{ isLoading ? 'Publication en cours...' : 'Publier' }}
+    </button>
   </form>
 </section>
