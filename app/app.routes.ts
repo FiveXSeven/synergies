@@ -5,6 +5,8 @@ import { AgroEchoPagesComponent } from "./pages/agro-echo-pages/agro-echo-pages.
 import { ContactComponent } from "./components/contact/contact.component";
 import { DashboardPagesComponent } from "./pages/dashboard-pages/dashboard-pages.component";
 import { LoginPageComponent } from "./pages/login-page/login-page.component";
+import { authGuard } from "./guards/auth.guard";
+import { CreatePublicationPagesComponent } from "./pages/create-publication-pages/create-publication-pages.component";
 
 export const routes: Routes = [
     {
@@ -26,6 +28,12 @@ export const routes: Routes = [
     {
         path: "board",
         component: DashboardPagesComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: "create-publication",
+        component: CreatePublicationPagesComponent,
+        canActivate: [authGuard],
     },
     {
         path: "connexion",

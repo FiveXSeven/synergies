@@ -1,6 +1,9 @@
-import { Component, HostListener } from "@angular/core";
+import { Component, HostListener, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterLink, RouterModule } from "@angular/router";
+import { Router, RouterLink, RouterModule } from "@angular/router";
+import { User } from "firebase/auth";
+import { Observable } from "rxjs";
+import { AuthService } from "../../services/auth.service";
 
 @Component({
     selector: "app-navbar",
@@ -12,6 +15,9 @@ import { RouterLink, RouterModule } from "@angular/router";
 export class NavbarComponent {
     isMenuOpen = false;
     activeLink = "Accueil";
+    authService: AuthService = inject(AuthService);
+    user$: Observable<User | null> = this.authService.user$;
+    router: Router = inject(Router);
 
     toggleMenu(): void {
         this.isMenuOpen = !this.isMenuOpen;
@@ -35,5 +41,15 @@ export class NavbarComponent {
         ) {
             this.isMenuOpen = false;
         }
+    }
+
+    logout(): void {
+        this.authService.signOut().subscribe({
+            next: () => {
+                console.log("Déconnexion réussie");
+                this.router.navigate(["/"]); // Redirection vers la page d’accueil
+            },
+            error: (err) => console.error("Erreur de déconnexion:", err),
+        });
     }
 }

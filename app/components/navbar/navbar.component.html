@@ -24,12 +24,7 @@
       </li>
       <li>
         <a routerLink="/agro-echos" [class.active]="activeLink === 'AGRO-ECHOS'" (click)="setActive('AGRO-ECHOS')">
-          AGRO-ECHOS
-        </a>
-      </li>
-      <li>
-        <a routerLink="/publicite" [class.active]="activeLink === 'Publicité'" (click)="setActive('Publicité')">
-          Publicité
+          Agro-echos
         </a>
       </li>
       <li>
@@ -37,6 +32,17 @@
           Contact
         </a>
       </li>
+      <li *ngIf="user$ | async as user">
+        <a routerLink="/board" [class.active]="activeLink === 'Dashboard'" (click)="setActive('Dashboard')">
+          Dashboard
+        </a>
+      </li>
+      <li *ngIf="user$ | async as user">
+        <a [class.active]="activeLink === 'Déconnexion'" (click)="logout()">
+          Déconnexion
+        </a>
+      </li>
+
     </ul>
   </nav>
 </header>

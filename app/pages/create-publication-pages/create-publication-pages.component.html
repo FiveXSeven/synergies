@@ -1,0 +1,31 @@
+<section class="dashboard">
+  <h1><i class="fas fa-plus"></i> Ajouter une publication</h1>
+  <form class="publication-form" action="#" method="post" enctype="multipart/form-data">
+    <label for="title">Titre de la publication</label>
+    <input type="text" id="title" name="title" required>
+
+    <label for="type">Type de publication</label>
+    <select id="type" name="type" required>
+      <option value="">-- Choisir un type --</option>
+      <option value="publi">Publication</option>
+      <option value="agro">Agro Echos</option>
+    </select>
+
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3" required></textarea>
+
+    <label for="content">Contenu</label>
+    <textarea id="content" name="content" rows="8" required></textarea>
+
+    <label for="location">Lieu de l'événement</label>
+    <input type="text" id="location" name="location" required>
+
+    <label for="date">Date de l'événement</label>
+    <input type="date" id="date" name="date" required>
+
+    <label for="photos">Ajouter des photos (max 4)</label>
+    <input type="file" id="photos" name="photos[]" accept="image/*" multiple required>
+
+    <button type="submit"><i class="fas fa-paper-plane"></i> Publier</button>
+  </form>
+</section>

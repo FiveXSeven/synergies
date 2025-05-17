@@ -4,10 +4,11 @@ import { AsyncPipe, JsonPipe, NgIf } from "@angular/common";
 import { AuthService } from "../../services/auth.service";
 import { User } from "@angular/fire/auth"; // Importer User de @angular/fire/auth
 import { Observable } from "rxjs";
+import { RouterLink } from "@angular/router";
 
 @Component({
     selector: "app-dashboard-pages",
-    imports: [HeaderPageComponent, AsyncPipe, JsonPipe],
+    imports: [HeaderPageComponent, RouterLink],
     templateUrl: "./dashboard-pages.component.html",
     styleUrl: "./dashboard-pages.component.scss",
 })
@@ -19,22 +20,6 @@ export class DashboardPagesComponent {
 
     ngOnInit(): void {
         // this.user$ est déjà initialisé via le service
-    }
-
-    loginWithGoogle(): void {
-        this.authService.googleSignIn().subscribe({
-            next: (user) => {
-                if (user) {
-                    console.log(
-                        "Connexion réussie, utilisateur:",
-                        user.displayName
-                    );
-                } else {
-                    console.log("Popup de connexion fermée ou échec");
-                }
-            },
-            error: (err) => console.error("Erreur de connexion Google:", err),
-        });
     }
 
     logout(): void {

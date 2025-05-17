@@ -3,15 +3,17 @@ import { AsyncPipe, JsonPipe, NgIf } from "@angular/common";
 import { AuthService } from "../../services/auth.service";
 import { User } from "@angular/fire/auth"; // Importer User de @angular/fire/auth
 import { Observable } from "rxjs";
+import { Router } from "@angular/router";
 @Component({
     selector: "app-login-page",
-    imports: [AsyncPipe, JsonPipe],
+    imports: [],
     templateUrl: "./login-page.component.html",
     styleUrl: "./login-page.component.scss",
 })
 export class LoginPageComponent {
     authService: AuthService = inject(AuthService);
     user$: Observable<User | null> = this.authService.user$; // Utiliser l'observable user$
+    router: Router = inject(Router);
 
     constructor() {}
 
@@ -27,6 +29,7 @@ export class LoginPageComponent {
                         "Connexion réussie, utilisateur:",
                         user.displayName
                     );
+                    this.router.navigate(["/board"]);
                 } else {
                     console.log("Popup de connexion fermée ou échec");
                 }

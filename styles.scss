@@ -3,31 +3,32 @@
 @import url("https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 body {
-  font-family: "Epilogue", sans-serif;
-  line-height: 1.6;
-  color: $text-color;
-  background-color: $light-bg;
+    font-family: "Epilogue", sans-serif;
+    line-height: 1.6;
+    color: $text-color;
+    background-color: $light-bg;
 }
 
 p {
-  font-size: 18px;
+    font-size: 18px;
 }
 
 a {
-  text-decoration: none;
+    text-decoration: none;
+    cursor: pointer !important;
 }
 
 li {
-  list-style: none;
+    list-style: none;
 }
 
 .mainContainer {
-  padding-left: 50px;
-  padding-right: 50px;
+    padding-left: 50px;
+    padding-right: 50px;
 }
