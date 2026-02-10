@@ -350,6 +350,23 @@ app.post('/api/publications/:id/comments', async (req: any, res: any): Promise<v
   }
 });
 
+// 9. Comments: Delete a comment (auth required - admin only)
+app.delete('/api/comments/:commentId', authenticateToken, async (req: any, res: any): Promise<void> => {
+  try {
+    const { commentId } = req.params;
+    const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+    if (!comment) {
+      res.status(404).json({ error: 'Commentaire non trouvé' });
+      return;
+    }
+    await prisma.comment.delete({ where: { id: commentId } });
+    res.json({ message: 'Commentaire supprimé' });
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression du commentaire' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
