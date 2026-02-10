@@ -15,6 +15,7 @@ model User {
   email        String        @unique
   name         String?
   pin          String        // User set PIN
+  role         String        @default("user") // "user" | "admin"
   publications Publication[]
   createdAt    DateTime      @default(now())
 }

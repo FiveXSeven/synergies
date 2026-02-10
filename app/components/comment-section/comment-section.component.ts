@@ -284,7 +284,8 @@ export class CommentSectionComponent implements OnInit {
     commentToDelete: Comment | null = null;
 
     get isAdmin(): boolean {
-        return !!this.authService.currentUserValue;
+        const user = this.authService.currentUserValue;
+        return !!user && user.role === 'admin';
     }
 
     ngOnInit(): void {

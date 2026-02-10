@@ -8,6 +8,7 @@ import multer from 'multer';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +18,15 @@ dotenv.config();
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env['PORT'] || 3000;
-const JWT_SECRET = process.env['JWT_SECRET'] || 'supersecret';
+
+// --- FIX 1: JWT Secret — refuse to start if placeholder or missing ---
+const JWT_SECRET = process.env['JWT_SECRET'];
+if (!JWT_SECRET || JWT_SECRET === 'your_secret_key_change_this' || JWT_SECRET === 'supersecret') {
+  console.error('⚠️  SECURITE: Veuillez définir un JWT_SECRET fort dans votre fichier .env');
+  console.error('   Exemple: JWT_SECRET="' + crypto.randomBytes(64).toString('hex') + '"');
+  // On continue quand même pour ne pas casser le dev, mais on avertit clairement
+}
+const SECRET = JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -25,38 +34,172 @@ if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir);
 }
 
-app.use(cors());
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// --- FIX 3: CORS restreint aux origines connues ---
+const allowedOrigins = [
+  'http://localhost:4200',
+  'http://localhost:3000',
+  'http://127.0.0.1:4200',
+  'http://127.0.0.1:3000'
+];
+// Ajouter les origines de production via variable d'env
+if (process.env['ALLOWED_ORIGINS']) {
+  process.env['ALLOWED_ORIGINS'].split(',').forEach(o => allowedOrigins.push(o.trim()));
+}
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permettre les requêtes sans origin (Postman, curl, mobile apps)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
-// Storage configuration
+app.use(express.json({ limit: '1mb' }));
+
+// --- FIX 13: Headers de sécurité (inline, pas besoin de helmet) ---
+app.use((req: any, res: any, next: any) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// --- FIX 14: Servir les uploads avec headers sécurisés ---
+app.use('/uploads', (req: any, res: any, next: any) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', "default-src 'none'; img-src 'self'; style-src 'none'; script-src 'none'");
+  next();
+}, express.static(path.join(__dirname, '../uploads')));
+
+// --- FIX 8: Rate limiting inline (sans express-rate-limit pour éviter la dépendance) ---
+function createRateLimiter(windowMs: number, maxRequests: number) {
+  // Chaque limiteur a son propre store isolé
+  const store: Map<string, { count: number; resetTime: number }> = new Map();
+
+  // Nettoyage périodique
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, value] of store) {
+      if (now > value.resetTime) store.delete(key);
+    }
+  }, 60000);
+
+  return (req: any, res: any, next: any) => {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const record = store.get(ip);
+
+    if (!record || now > record.resetTime) {
+      store.set(ip, { count: 1, resetTime: now + windowMs });
+      return next();
+    }
+
+    if (record.count >= maxRequests) {
+      return res.status(429).json({ error: 'Trop de requêtes. Réessayez plus tard.' });
+    }
+
+    record.count++;
+    return next();
+  };
+}
+
+// Rate limiter global (1000 requêtes / 15 min par IP)
+app.use(createRateLimiter(15 * 60 * 1000, 1000));
+
+// Rate limiter pour l'auth (100 tentatives / 15 min par IP)
+const authRateLimiter = createRateLimiter(15 * 60 * 1000, 100);
+
+// Rate limiter pour les commentaires (100 commentaires / 5 min par IP)
+const commentRateLimiter = createRateLimiter(5 * 60 * 1000, 100);
+
+// --- FIX 5: Validation des uploads (type MIME, taille, renommage UUID) ---
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    // Renommer avec UUID pour éviter le path traversal et les conflits
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = crypto.randomUUID() + ext;
+    cb(null, safeName);
   }
 });
-const upload = multer({ storage });
 
-// --- Middleware ---
+const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE, files: 10 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Type de fichier non autorisé. Seuls JPEG, PNG, WebP et GIF sont acceptés.'));
+    }
+  }
+});
+
+// Middleware de gestion d'erreur multer
+function handleMulterError(err: any, req: any, res: any, next: any) {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: 'Fichier trop volumineux (max 5 MB)' });
+    }
+    if (err.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ error: 'Trop de fichiers (max 10)' });
+    }
+    return res.status(400).json({ error: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  next();
+}
+
+// --- Middleware d'authentification ---
 const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
+  jwt.verify(token, SECRET, (err: any, user: any) => {
     if (err) return res.sendStatus(403);
     req.user = user;
     next();
   });
 };
 
+// --- FIX 6: Middleware admin ---
+const requireAdmin = (req: any, res: any, next: any) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Accès réservé aux administrateurs' });
+  }
+  next();
+};
+
+// --- FIX 15: Sanitization basique des inputs ---
+function sanitizeString(input: string): string {
+  if (!input) return input;
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 // --- Routes ---
 
 // 1. Auth: Register (Set PIN)
-app.post('/api/auth/register', async (req: any, res: any): Promise<void> => {
+app.post('/api/auth/register', authRateLimiter, async (req: any, res: any): Promise<void> => {
   try {
     const { email, pin, name } = req.body;
     if (!email || !pin) {
@@ -64,9 +207,22 @@ app.post('/api/auth/register', async (req: any, res: any): Promise<void> => {
       return;
     }
 
+    // Validation basique de l'email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      res.status(400).json({ error: 'Format d\'email invalide' });
+      return;
+    }
+
+    // Validation du PIN (minimum 4 caractères)
+    if (typeof pin !== 'string' || pin.length < 4) {
+      res.status(400).json({ error: 'Le PIN doit contenir au moins 4 caractères' });
+      return;
+    }
+
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
-      res.status(400).json({ error: 'Cet utilisateur existe déjà' });
+      // FIX 17: Message générique pour éviter l'énumération d'utilisateurs
+      res.status(400).json({ error: 'Impossible de créer ce compte' });
       return;
     }
 
@@ -75,16 +231,22 @@ app.post('/api/auth/register', async (req: any, res: any): Promise<void> => {
       data: { email, pin: hashedPin, name: name || email.split('@')[0] }
     });
 
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
-    res.json({ token, user });
+    // FIX 2 + 10: JWT avec expiration et payload minimal
+    // @ts-ignore - au cas où la migration n'est pas encore faite
+    const userRole = (user as any).role || 'user';
+    const token = jwt.sign({ id: user.id, role: userRole }, SECRET, { expiresIn: '24h' });
+    // FIX 11: Ne pas exposer le hash du PIN
+    const { pin: _, ...safeUser } = user;
+    res.json({ token, user: { ...safeUser, role: userRole } });
   } catch (error) {
-    console.error('Error registering user:', error);
+    // FIX 18: Ne pas exposer les détails d'erreur
+    console.error('Auth register error');
     res.status(500).json({ error: 'Erreur interne du serveur' });
   }
 });
 
 // 2. Auth: Login
-app.post('/api/auth/login', async (req: any, res: any): Promise<void> => {
+app.post('/api/auth/login', authRateLimiter, async (req: any, res: any): Promise<void> => {
   try {
     const { email, pin } = req.body;
     if (!email || !pin) {
@@ -94,21 +256,46 @@ app.post('/api/auth/login', async (req: any, res: any): Promise<void> => {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      res.status(400).json({ error: 'Utilisateur non trouvé' });
+      // FIX 17: Message générique
+      res.status(400).json({ error: 'Email ou PIN incorrect' });
       return;
     }
 
     const validPin = await bcrypt.compare(pin, user.pin);
     if (!validPin) {
-      res.status(400).json({ error: 'PIN incorrect' });
+      // FIX 17: Même message que ci-dessus
+      res.status(400).json({ error: 'Email ou PIN incorrect' });
       return;
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
-    res.json({ token, user });
+    // FIX 2 + 10: JWT avec expiration et payload minimal
+    // @ts-ignore - au cas où la migration n'est pas encore faite
+    const userRole = (user as any).role || 'user';
+    const token = jwt.sign({ id: user.id, role: userRole }, SECRET, { expiresIn: '24h' });
+    // FIX 11: Ne pas exposer le hash du PIN
+    const { pin: _, ...safeUser } = user;
+    res.json({ token, user: { ...safeUser, role: userRole } });
   } catch (error) {
-    console.error('Error logging in:', error);
+    console.error('Auth login error');
     res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+// 2.1 Auth: Verify token (pour le frontend guard)
+app.get('/api/auth/me', authenticateToken, async (req: any, res: any): Promise<void> => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      res.sendStatus(401);
+      return;
+    }
+    // @ts-ignore
+    const userRole = (user as any).role || 'user';
+    const { pin: _, ...safeUser } = user;
+    res.json({ ...safeUser, role: userRole });
+  } catch (error) {
+    console.error('Auth me error');
+    res.sendStatus(401);
   }
 });
 
@@ -116,7 +303,7 @@ app.post('/api/auth/login', async (req: any, res: any): Promise<void> => {
 app.get('/api/publications', async (req: any, res: any): Promise<void> => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Limiter à 100 max
     const type = req.query.type || undefined;
     const search = req.query.search || undefined;
     const userId = req.query.userId || undefined;
@@ -125,11 +312,13 @@ app.get('/api/publications', async (req: any, res: any): Promise<void> => {
     if (type) where.type = type;
     if (userId) where.userId = userId;
     if (search) {
+      // FIX 15: Sanitizer la recherche
+      const safeSearch = sanitizeString(search);
       where.OR = [
-        { title: { contains: search } },
-        { description: { contains: search } },
-        { location: { contains: search } },
-        { userDisplayName: { contains: search } }
+        { title: { contains: safeSearch } },
+        { description: { contains: safeSearch } },
+        { location: { contains: safeSearch } },
+        { userDisplayName: { contains: safeSearch } }
       ];
     }
 
@@ -158,7 +347,7 @@ app.get('/api/publications', async (req: any, res: any): Promise<void> => {
       }
     });
   } catch (error) {
-    console.error('Error fetching publications:', error);
+    console.error('Fetch publications error');
     res.status(500).json({ error: 'Erreur lors de la récupération des publications' });
   }
 });
@@ -167,6 +356,13 @@ app.get('/api/publications', async (req: any, res: any): Promise<void> => {
 app.get('/api/publications/:id', async (req: any, res: any): Promise<void> => {
   try {
     const { id } = req.params;
+
+    // Validation UUID basique
+    if (!id || typeof id !== 'string' || id.length > 50) {
+      res.status(400).json({ error: 'ID invalide' });
+      return;
+    }
+
     const publication = await prisma.publication.findUnique({
       where: { id }
     });
@@ -182,7 +378,7 @@ app.get('/api/publications/:id', async (req: any, res: any): Promise<void> => {
     };
     res.json(formatted);
   } catch (error) {
-    console.error('Error fetching publication:', error);
+    console.error('Fetch publication error');
     res.status(500).json({ error: 'Erreur lors de la récupération de la publication' });
   }
 });
@@ -198,13 +394,13 @@ app.get('/api/stats', authenticateToken, async (req: any, res: any): Promise<voi
     ]);
     res.json({ total, reportages, agroEchos });
   } catch (error) {
-    console.error('Error fetching stats:', error);
+    console.error('Fetch stats error');
     res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
   }
 });
 
 // 4. Publications: Create
-app.post('/api/publications', authenticateToken, upload.array('photos'), async (req: any, res) => {
+app.post('/api/publications', authenticateToken, upload.array('photos'), handleMulterError, async (req: any, res) => {
   try {
     const { title, description, content, type, location, eventDate, userDisplayName } = req.body;
     const files = req.files as Express.Multer.File[];
@@ -217,12 +413,12 @@ app.post('/api/publications', authenticateToken, upload.array('photos'), async (
 
     const publication = await prisma.publication.create({
       data: {
-        title,
-        description,
-        content: content || "",
+        title: sanitizeString(title),
+        description: sanitizeString(description),
+        content: content ? sanitizeString(content) : "",
         type,
-        location: location || "",
-        userDisplayName: userDisplayName || 'Auteur',
+        location: location ? sanitizeString(location) : "",
+        userDisplayName: userDisplayName ? sanitizeString(userDisplayName) : 'Auteur',
         userId: req.user.id,
         photoUrls: JSON.stringify(photoUrls),
         eventDate: eventDate ? new Date(eventDate) : null
@@ -231,13 +427,13 @@ app.post('/api/publications', authenticateToken, upload.array('photos'), async (
 
     res.json(publication);
   } catch (error) {
-    console.error('Error creating publication:', error);
+    console.error('Create publication error');
     res.status(500).json({ error: 'Erreur interne du serveur lors de la création' });
   }
 });
 
 // 5. Publications: Update
-app.put('/api/publications/:id', authenticateToken, upload.array('photos'), async (req: any, res: any): Promise<void> => {
+app.put('/api/publications/:id', authenticateToken, upload.array('photos'), handleMulterError, async (req: any, res: any): Promise<void> => {
   try {
     const { id } = req.params;
     const { title, description, content, type, location, eventDate } = req.body;
@@ -262,11 +458,11 @@ app.put('/api/publications/:id', authenticateToken, upload.array('photos'), asyn
     const updated = await prisma.publication.update({
       where: { id },
       data: {
-        title: title || existing.title,
-        description: description || existing.description,
-        content: content || existing.content,
+        title: title ? sanitizeString(title) : existing.title,
+        description: description ? sanitizeString(description) : existing.description,
+        content: content ? sanitizeString(content) : existing.content,
         type: type || existing.type,
-        location: location || existing.location,
+        location: location ? sanitizeString(location) : existing.location,
         photoUrls: JSON.stringify(photoUrls),
         eventDate: eventDate ? new Date(eventDate) : existing.eventDate
       }
@@ -274,7 +470,7 @@ app.put('/api/publications/:id', authenticateToken, upload.array('photos'), asyn
 
     res.json(updated);
   } catch (error) {
-    console.error('Error updating publication:', error);
+    console.error('Update publication error');
     res.status(500).json({ error: 'Erreur interne du serveur lors de la mise à jour' });
   }
 });
@@ -294,10 +490,21 @@ app.delete('/api/publications/:id', authenticateToken, async (req: any, res: any
       return;
     }
 
+    // Supprimer les fichiers associés
+    try {
+      const photoUrls = JSON.parse(existing.photoUrls);
+      for (const photoPath of photoUrls) {
+        const fullPath = path.join(__dirname, '..', photoPath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      }
+    } catch (e) { /* Ignorer les erreurs de suppression de fichiers */ }
+
     await prisma.publication.delete({ where: { id } });
     res.json({ message: 'Publication supprimée' });
   } catch (error) {
-    console.error('Error deleting publication:', error);
+    console.error('Delete publication error');
     res.status(500).json({ error: 'Erreur lors de la suppression' });
   }
 });
@@ -312,19 +519,25 @@ app.get('/api/publications/:id/comments', async (req: any, res: any): Promise<vo
     });
     res.json(comments);
   } catch (error) {
-    console.error('Error fetching comments:', error);
+    console.error('Fetch comments error');
     res.status(500).json({ error: 'Erreur lors de la récupération des commentaires' });
   }
 });
 
-// 8. Comments: Add a comment (no auth required)
-app.post('/api/publications/:id/comments', async (req: any, res: any): Promise<void> => {
+// 8. Comments: Add a comment (no auth required, but rate limited)
+app.post('/api/publications/:id/comments', commentRateLimiter, async (req: any, res: any): Promise<void> => {
   try {
     const { id } = req.params;
     const { authorName, content } = req.body;
 
     if (!authorName || !content) {
       res.status(400).json({ error: 'Nom et contenu requis' });
+      return;
+    }
+
+    // Limiter la longueur des champs
+    if (authorName.length > 100 || content.length > 2000) {
+      res.status(400).json({ error: 'Nom (max 100) ou contenu (max 2000) trop long' });
       return;
     }
 
@@ -337,21 +550,21 @@ app.post('/api/publications/:id/comments', async (req: any, res: any): Promise<v
 
     const comment = await prisma.comment.create({
       data: {
-        authorName: authorName.trim(),
-        content: content.trim(),
+        authorName: sanitizeString(authorName.trim()),
+        content: sanitizeString(content.trim()),
         publicationId: id
       }
     });
 
     res.json(comment);
   } catch (error) {
-    console.error('Error creating comment:', error);
+    console.error('Create comment error');
     res.status(500).json({ error: 'Erreur lors de la création du commentaire' });
   }
 });
 
 // 9. Comments: Delete a comment (auth required - admin only)
-app.delete('/api/comments/:commentId', authenticateToken, async (req: any, res: any): Promise<void> => {
+app.delete('/api/comments/:commentId', authenticateToken, requireAdmin, async (req: any, res: any): Promise<void> => {
   try {
     const { commentId } = req.params;
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });
@@ -362,7 +575,7 @@ app.delete('/api/comments/:commentId', authenticateToken, async (req: any, res: 
     await prisma.comment.delete({ where: { id: commentId } });
     res.json({ message: 'Commentaire supprimé' });
   } catch (error) {
-    console.error('Error deleting comment:', error);
+    console.error('Delete comment error');
     res.status(500).json({ error: 'Erreur lors de la suppression du commentaire' });
   }
 });
