@@ -1,92 +1,186 @@
 @use "../../../variables" as *;
 
-/* Bannière principale */
+// Animations
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
 .manifesto-banner {
-    background: linear-gradient(
-        135deg,
-        darken($primary-color, 35%) 30%,
-        lighten($primary-color, 10%) 100%
-    );
+    background: linear-gradient(135deg, darken($primary-color, 15%) 0%, $primary-color 50%, lighten($primary-color, 10%) 100%);
+    background-size: cover;
+    background-position: center;
     color: white;
-    padding: 3rem 1rem;
     text-align: center;
+    padding: 5rem 1.5rem;
     position: relative;
     overflow: hidden;
-    height: 500px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        pointer-events: none;
+    }
 
     .container {
         position: relative;
         z-index: 2;
-        padding: 0 1rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .banner-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 0.6rem 1.5rem;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.6s ease-out;
+
+        i {
+            font-size: 1rem;
+        }
     }
 
     h1 {
-        font-size: 2rem;
-        margin-bottom: 1rem;
+        font-size: 2.2rem;
+        margin-bottom: 1.2rem;
         font-weight: 800;
-        letter-spacing: -0.5px;
         line-height: 1.2;
+        animation: fadeInUp 0.6s ease-out 0.1s backwards;
+
+        @media (min-width: 768px) {
+            font-size: 3rem;
+        }
+
+        @media (min-width: 992px) {
+            font-size: 3.5rem;
+        }
+    }
+
+    .banner-subtitle {
+        max-width: 700px;
+        margin: 0 auto 2rem;
+        animation: fadeInUp 0.6s ease-out 0.2s backwards;
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            opacity: 0.95;
+
+            @media (min-width: 768px) {
+                font-size: 1.25rem;
+            }
+        }
+    }
+
+    .banner-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        animation: fadeInUp 0.6s ease-out 0.3s backwards;
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+
+            &.btn-primary {
+                background: white;
+                color: $primary-color;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+
+                &:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+                }
+            }
+
+            &.btn-secondary {
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.25);
+                    border-color: white;
+                }
+            }
+
+            i {
+                font-size: 0.9rem;
+            }
+        }
     }
 }
 
-.banner-subtitle {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0 1rem;
-
-    p {
-        font-size: 1.1rem;
-        line-height: 1.5;
-    }
+.mainContainer {
+    background: #f8faf9;
 }
 
 /* Medium devices (tablets, 768px and up) */
 @media (min-width: 768px) {
     .manifesto-banner {
-        padding: 4rem 2rem;
-
-        h1 {
-            font-size: 2.8rem;
-            margin-bottom: 1.2rem;
-        }
-    }
-
-    .banner-subtitle {
-        max-width: 80%;
-
-        p {
-            font-size: 1.3rem;
-        }
+        padding: 6rem 2rem;
     }
 }
 
 /* Large devices (desktops, 992px and up) */
 @media (min-width: 992px) {
     .manifesto-banner {
-        padding: 5rem 0;
-
-        h1 {
-            font-size: 3.2rem;
-            margin-bottom: 1.5rem;
-        }
-    }
-
-    .banner-subtitle {
-        max-width: 700px;
-
-        p {
-            font-size: 1.4rem;
-            line-height: 1.6;
-        }
+        padding: 7rem 0;
     }
 }
 
 /* Extra large devices (large desktops, 1200px and up) */
 @media (min-width: 1200px) {
     .manifesto-banner {
-        padding: 6rem 0;
+        padding: 8rem 0;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .manifesto-banner {
+        padding: 4rem 1rem;
+
+        .banner-actions {
+            flex-direction: column;
+            align-items: center;
+
+            a {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+        }
     }
 }

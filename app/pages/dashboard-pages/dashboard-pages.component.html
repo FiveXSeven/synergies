@@ -1,8 +1,67 @@
 <section class="page-header">
-  <app-header-page title="Dashboard"
-    subtitle="Ici vous pouvez ajouter des reportages et des actualiés sur l'agroécologie" />
+  <app-header-page title="Tableau de bord"
+    subtitle="Gérez vos reportages et actualités sur l'agroécologie" />
 </section>
 
-<section class="dashboard">
-  <a routerLink="/create-publication"><i class="fas fa-plus"></i> Ajouter une publication</a>
+<section class="dashboard container">
+  <div class="actions">
+    <a routerLink="/create-publication" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter une publication</a>
+    <button (click)="showLogoutDialog()" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+  </div>
+
+  <div class="publications-list">
+    <h3>Mes Publications</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Type</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let pub of publications">
+          <td>{{ pub.title }}</td>
+          <td>{{ pub.type === 'publi' ? 'Reportage' : 'Agro-écho' }}</td>
+          <td>{{ pub.eventDate | date:'dd/MM/yyyy' }}</td>
+          <td>
+            <a [routerLink]="['/create-publication']" [queryParams]="{ id: pub.id }" class="btn-edit"><i class="fas fa-edit"></i> Modifier</a>
+            <button (click)="showDeleteDialog(pub)" class="btn-delete"><i class="fas fa-trash-alt"></i> Supprimer</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p *ngIf="publications.length === 0">Vous n'avez pas encore de publications.</p>
+  </div>
 </section>
+
+<!-- Delete Confirmation Dialog -->
+<div class="dialog-overlay" *ngIf="showDeleteConfirm" (click)="cancelDelete()">
+  <div class="dialog-box" (click)="$event.stopPropagation()">
+    <div class="dialog-icon dialog-icon-danger">
+      <i class="fas fa-trash-alt"></i>
+    </div>
+    <h3>Supprimer la publication</h3>
+    <p>Êtes-vous sûr de vouloir supprimer <strong>« {{ publicationToDelete?.title }} »</strong> ? Cette action est irréversible.</p>
+    <div class="dialog-actions">
+      <button class="dialog-btn dialog-btn-cancel" (click)="cancelDelete()">Annuler</button>
+      <button class="dialog-btn dialog-btn-danger" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirmation Dialog -->
+<div class="dialog-overlay" *ngIf="showLogoutConfirm" (click)="cancelLogout()">
+  <div class="dialog-box" (click)="$event.stopPropagation()">
+    <div class="dialog-icon">
+      <i class="fas fa-sign-out-alt"></i>
+    </div>
+    <h3>Déconnexion</h3>
+    <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+    <div class="dialog-actions">
+      <button class="dialog-btn dialog-btn-cancel" (click)="cancelLogout()">Annuler</button>
+      <button class="dialog-btn dialog-btn-confirm" (click)="confirmLogout()">Se déconnecter</button>
+    </div>
+  </div>
+</div>

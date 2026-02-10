@@ -1,6 +1,28 @@
-<form class="login-form">
-  <h1>Connexion avec Google</h1>
-  <button type="button" (click)="loginWithGoogle()" class="google-login">
-    <i class="fab fa-google"></i> Connexion avec Google
-  </button>
-</form>
+<div class="login-container">
+  <form class="login-form" (ngSubmit)="onSubmit()">
+    <h1>{{ mode === 'login' ? 'Connexion' : 'Inscription' }}</h1>
+    
+    <div *ngIf="mode === 'register'" class="form-group">
+      <input type="text" name="name" [(ngModel)]="name" placeholder="Nom complet" required>
+    </div>
+
+    <div class="form-group">
+      <input type="email" name="email" [(ngModel)]="email" placeholder="Email" required>
+    </div>
+
+    <div class="form-group">
+      <input type="password" name="pin" [(ngModel)]="pin" placeholder="Code PIN" required>
+    </div>
+
+    <button type="submit" [disabled]="loading">
+      {{ loading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : "S'inscrire") }}
+    </button>
+
+    <p class="toggle-mode">
+      {{ mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?" }}
+      <a (click)="toggleMode()">{{ mode === 'login' ? "S'inscrire" : "Se connecter" }}</a>
+    </p>
+
+    <p class="error" *ngIf="error">{{ error }}</p>
+  </form>
+</div>

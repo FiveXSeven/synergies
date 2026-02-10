@@ -1,31 +1,79 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { HeaderPageComponent } from "../../components/header-page/header-page.component";
-import { AsyncPipe, JsonPipe, NgIf } from "@angular/common";
+import { AsyncPipe, NgIf, NgFor, CommonModule } from "@angular/common";
 import { AuthService } from "../../services/auth.service";
-import { User } from "@angular/fire/auth"; // Importer User de @angular/fire/auth
-import { Observable } from "rxjs";
-import { RouterLink } from "@angular/router";
+import { PublicationService } from "../../services/publication.service";
+import { User } from "../../models/user.model";
+import { Publication } from "../../models/publication.model";
+import { Observable, take } from "rxjs";
+import { RouterLink, Router } from "@angular/router";
 
 @Component({
     selector: "app-dashboard-pages",
-    imports: [HeaderPageComponent, RouterLink],
+    standalone: true,
+    imports: [HeaderPageComponent, RouterLink, AsyncPipe, NgIf, NgFor, CommonModule],
     templateUrl: "./dashboard-pages.component.html",
     styleUrl: "./dashboard-pages.component.scss",
 })
-export class DashboardPagesComponent {
-    authService: AuthService = inject(AuthService);
-    user$: Observable<User | null> = this.authService.user$; // Utiliser l'observable user$
+export class DashboardPagesComponent implements OnInit {
+    authService = inject(AuthService);
+    publicationService = inject(PublicationService);
+    router = inject(Router);
+    user$: Observable<User | null> = this.authService.currentUser$;
+    publications: Publication[] = [];
 
-    constructor() {}
+    // Dialog state
+    showDeleteConfirm = false;
+    showLogoutConfirm = false;
+    publicationToDelete: Publication | null = null;
 
     ngOnInit(): void {
-        // this.user$ est déjà initialisé via le service
+        this.loadPublications();
     }
 
-    logout(): void {
-        this.authService.signOut().subscribe({
-            next: () => console.log("Déconnexion réussie"),
-            error: (err) => console.error("Erreur de déconnexion:", err),
+    loadPublications(): void {
+        this.user$.pipe(take(1)).subscribe(user => {
+            if (user) {
+                this.publicationService.getPublications().subscribe(all => {
+                    this.publications = all.filter(p => p.userId === user.id);
+                });
+            }
         });
+    }
+
+    // Delete dialog
+    showDeleteDialog(pub: Publication): void {
+        this.publicationToDelete = pub;
+        this.showDeleteConfirm = true;
+    }
+
+    cancelDelete(): void {
+        this.showDeleteConfirm = false;
+        this.publicationToDelete = null;
+    }
+
+    confirmDelete(): void {
+        if (this.publicationToDelete?.id) {
+            this.publicationService.deletePublication(this.publicationToDelete.id).subscribe(() => {
+                this.loadPublications();
+            });
+        }
+        this.showDeleteConfirm = false;
+        this.publicationToDelete = null;
+    }
+
+    // Logout dialog
+    showLogoutDialog(): void {
+        this.showLogoutConfirm = true;
+    }
+
+    cancelLogout(): void {
+        this.showLogoutConfirm = false;
+    }
+
+    confirmLogout(): void {
+        this.showLogoutConfirm = false;
+        this.authService.signOut();
+        this.router.navigate(['/connexion']);
     }
 }

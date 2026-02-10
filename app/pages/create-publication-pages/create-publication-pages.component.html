@@ -1,88 +1,114 @@
-<section class="dashboard">
-  <h1><i class="fas fa-plus"></i> Ajouter une publication</h1>
-
-  <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
-  <div *ngIf="successMessage" class="alert alert-success">{{ successMessage }}</div>
-
-  <form class="publication-form" [formGroup]="publicationForm" (ngSubmit)="onSubmit()">
-    <div>
-      <label for="title">Titre de la publication</label>
-      <input type="text" id="title" formControlName="title">
-      <div
-        *ngIf="publicationForm.get('title')?.invalid && (publicationForm.get('title')?.dirty || publicationForm.get('title')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('title')?.errors?.['required']">Le titre est requis.</small>
+<div class="create-publication-pages">
+  <div class="form-card">
+    <div class="header">
+      <div class="title-area">
+        <h1>{{ isEditMode ? 'Modifier' : 'Nouvelle' }} Publication</h1>
+        <p class="subtitle">Partagez vos initiatives agroécologiques avec la communauté</p>
       </div>
+      <a routerLink="/board" class="btn-close" title="Fermer"><i class="fas fa-times"></i></a>
     </div>
 
-    <div>
-      <label for="type">Type de publication</label>
-      <select id="type" formControlName="type">
-        <option value="">-- Choisir un type --</option>
-        <option value="publi">Publication (Publi-reportage)</option>
-        <option value="agro">Agro Echos</option>
-      </select>
-      <div
-        *ngIf="publicationForm.get('type')?.invalid && (publicationForm.get('type')?.dirty || publicationForm.get('type')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('type')?.errors?.['required']">Le type est requis.</small>
-      </div>
+    <!-- Feedback Messages -->
+    <div *ngIf="errorMessage" class="alert alert-danger animate-in">
+      <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    </div>
+    <div *ngIf="successMessage" class="alert alert-success animate-in">
+      <i class="fas fa-check-circle"></i> {{ successMessage }}
     </div>
 
-    <div>
-      <label for="description">Description</label>
-      <textarea id="description" formControlName="description" rows="3"></textarea>
-      <div
-        *ngIf="publicationForm.get('description')?.invalid && (publicationForm.get('description')?.dirty || publicationForm.get('description')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('description')?.errors?.['required']">La description est requise.</small>
-      </div>
-    </div>
+    <form class="publication-form" [formGroup]="publicationForm" (ngSubmit)="onSubmit()">
+      
+      <!-- General Info Section -->
+      <div class="form-section">
+        <h3><i class="fas fa-info-circle"></i> Informations Générales</h3>
+        <div class="grid-container">
+          <div class="form-group full-width">
+            <label for="title">Titre de la publication</label>
+            <input type="text" id="title" formControlName="title" placeholder="Ex: Révolution verte à Korhogo">
+            <div *ngIf="publicationForm.get('title')?.touched && publicationForm.get('title')?.invalid" class="error">
+              Le titre est requis.
+            </div>
+          </div>
 
-    <div>
-      <label for="content">Contenu</label>
-      <textarea id="content" formControlName="content" rows="8"></textarea>
-      <div
-        *ngIf="publicationForm.get('content')?.invalid && (publicationForm.get('content')?.dirty || publicationForm.get('content')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('content')?.errors?.['required']">Le contenu est requis.</small>
-      </div>
-    </div>
+          <div class="form-group">
+            <label for="type">Type de contenu</label>
+            <select id="type" formControlName="type">
+              <option value="">Sélectionnez un type</option>
+              <option value="publi">Publi-reportage</option>
+              <option value="agro">Agro Echos</option>
+            </select>
+            <div *ngIf="publicationForm.get('type')?.touched && publicationForm.get('type')?.invalid" class="error">
+              Le type de contenu est requis.
+            </div>
+          </div>
 
-    <div>
-      <label for="location">Lieu de l'événement</label>
-      <input type="text" id="location" formControlName="location">
-      <div
-        *ngIf="publicationForm.get('location')?.invalid && (publicationForm.get('location')?.dirty || publicationForm.get('location')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('location')?.errors?.['required']">Le lieu est requis.</small>
-      </div>
-    </div>
+          <div class="form-group">
+            <label for="date">Date de lèvement</label>
+            <input type="date" id="date" formControlName="date">
+            <div *ngIf="publicationForm.get('date')?.touched && publicationForm.get('date')?.invalid" class="error">
+              La date est requise.
+            </div>
+          </div>
 
-    <div>
-      <label for="date">Date de l'événement</label>
-      <input type="date" id="date" formControlName="date">
-      <div
-        *ngIf="publicationForm.get('date')?.invalid && (publicationForm.get('date')?.dirty || publicationForm.get('date')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('date')?.errors?.['required']">La date est requise.</small>
+          <div class="form-group full-width">
+            <label for="location">Lieu / Région</label>
+            <input type="text" id="location" formControlName="location" placeholder="Ex: Côte d'Ivoire, Nord">
+            <div *ngIf="publicationForm.get('location')?.touched && publicationForm.get('location')?.invalid" class="error">
+              Le lieu est requis.
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <label for="photos">Ajouter des photos (max 4)</label>
-      <input type="file" id="photos" (change)="onFileSelected($event)" accept="image/*" multiple>
-      <!-- Note: formControlName="photos" est sur le groupe, la validation se fait là -->
-      <div
-        *ngIf="publicationForm.get('photos')?.invalid && (publicationForm.get('photos')?.dirty || publicationForm.get('photos')?.touched)"
-        class="error-message">
-        <small *ngIf="publicationForm.get('photos')?.errors?.['required']">Au moins une photo est requise.</small>
-        <small *ngIf="publicationForm.get('photos')?.errors?.['maxFilesExceeded']">Maximum 4 photos autorisées.</small>
+      <!-- Content Section -->
+      <div class="form-section">
+        <h3><i class="fas fa-pen"></i> Contenu de l'article</h3>
+        <div class="form-group">
+          <label for="description">Résumé court</label>
+          <textarea id="description" formControlName="description" rows="2" placeholder="Une brève introduction qui incite à la lecture..."></textarea>
+          <div *ngIf="publicationForm.get('description')?.touched && publicationForm.get('description')?.invalid" class="error">
+            Le résumé est requis.
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="content">Corps de l'article</label>
+          <textarea id="content" formControlName="content" rows="10" placeholder="Racontez votre histoire en détail ici..."></textarea>
+          <div *ngIf="publicationForm.get('content')?.touched && publicationForm.get('content')?.invalid" class="error">
+            Le contenu de l'article est requis.
+          </div>
+        </div>
       </div>
-    </div>
 
-    <button type="submit" [disabled]="isLoading || publicationForm.invalid">
-      <i class="fas fa-paper-plane"></i> {{ isLoading ? 'Publication en cours...' : 'Publier' }}
-    </button>
-  </form>
-</section>
+      <!-- Media Section -->
+      <div class="form-section">
+        <h3><i class="fas fa-camera"></i> Médias</h3>
+        <div class="upload-area" [class.has-files]="selectedFiles && selectedFiles.length > 0">
+          <input type="file" id="photos" (change)="onFileSelected($event)" accept="image/*" multiple hidden #fileInput>
+          <div class="upload-placeholder" (click)="fileInput.click()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p *ngIf="!selectedFiles || selectedFiles.length === 0">Cliquez pour ajouter des photos (max 4)</p>
+            <p *ngIf="selectedFiles && selectedFiles.length > 0">{{ selectedFiles.length }} fichier(s) sélectionné(s)</p>
+            <span>JPG, PNG ou WebP</span>
+          </div>
+        </div>
+        <div *ngIf="publicationForm.get('photos')?.touched && publicationForm.get('photos')?.invalid" class="error">
+          <small *ngIf="publicationForm.get('photos')?.errors?.['required']">Au moins une photo est requise.</small>
+          <small *ngIf="publicationForm.get('photos')?.errors?.['maxFilesExceeded']">Maximum 4 photos autorisées.</small>
+        </div>
+      </div>
+
+      <!-- Submit Section -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" routerLink="/board">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading" (click)="onSubmit($event)">
+          <span *ngIf="!isLoading">
+            <i class="fas" [class.fa-plus]="!isEditMode" [class.fa-save]="isEditMode"></i>
+            {{ isEditMode ? 'Enregistrer les modifications' : "Publier l'article" }}
+          </span>
+          <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin"></i> Traitement...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

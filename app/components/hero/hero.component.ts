@@ -1,11 +1,18 @@
 import { Component } from "@angular/core";
+import { RouterLink } from "@angular/router";
 import { AboutComponent } from "../about/about.component";
-import { TechniquesAgroecoComponent } from "../techniques-agroeco/techniques-agroeco.component";
+import { RecentPostsComponent } from "../recent-posts/recent-posts.component";
 import { FooterComponent } from "../footer/footer.component";
 
 @Component({
     selector: "app-hero",
-    imports: [AboutComponent, TechniquesAgroecoComponent, FooterComponent],
+    standalone: true,
+    imports: [
+        RouterLink,
+        AboutComponent, 
+        RecentPostsComponent,
+        FooterComponent
+    ],
     templateUrl: "./hero.component.html",
     styleUrl: "./hero.component.scss",
 })

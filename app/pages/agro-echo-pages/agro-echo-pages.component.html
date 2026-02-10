@@ -2,6 +2,55 @@
   <app-header-page title="AGRO-ECHOS" subtitle="L'actualité de l'agroécologie en Afrique de l'Ouest" />
 </section>
 
-<div class="mainContainer">
-  <app-agro-echo-card />
-</div>
+<!-- Filter & Search Section -->
+<section class="filter-section">
+  <div class="container">
+    <div class="filter-bar">
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Rechercher une actualité..." [(ngModel)]="searchQuery" (input)="filterPublications()">
+        <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="filter-chips">
+        <button class="chip" [class.active]="sortBy === 'recent'" (click)="setSortBy('recent')">
+          <i class="fas fa-clock"></i> Récents
+        </button>
+        <button class="chip" [class.active]="sortBy === 'oldest'" (click)="setSortBy('oldest')">
+          <i class="fas fa-history"></i> Anciens
+        </button>
+        <button class="chip" [class.active]="sortBy === 'alpha'" (click)="setSortBy('alpha')">
+          <i class="fas fa-sort-alpha-down"></i> A-Z
+        </button>
+      </div>
+    </div>
+    <div class="results-info" *ngIf="searchQuery || sortBy !== 'recent'">
+      <span class="results-count">{{ filteredPublications.length }} résultat(s)</span>
+      <button class="reset-btn" (click)="resetFilters()">
+        <i class="fas fa-undo"></i> Réinitialiser
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="agro-echos-featured">
+  <div class="container">
+    <div class="mainContainer">
+      <app-agro-echo-card *ngFor="let pub of filteredPublications" [publication]="pub" />
+      
+      <!-- Empty State -->
+      <div *ngIf="filteredPublications.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-search"></i>
+        </div>
+        <h3>Aucune actualité trouvée</h3>
+        <p *ngIf="searchQuery">Aucun résultat pour "{{ searchQuery }}"</p>
+        <p *ngIf="!searchQuery">Aucune actualité disponible pour le moment.</p>
+        <button class="btn btn-primary" *ngIf="searchQuery" (click)="resetFilters()">
+          <i class="fas fa-undo"></i> Réinitialiser la recherche
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

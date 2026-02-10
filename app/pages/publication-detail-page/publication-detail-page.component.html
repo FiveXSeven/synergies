@@ -1,0 +1,115 @@
+<div class="publication-detail-container" *ngIf="!isLoading && publication">
+  <!-- Hero Section -->
+  <header class="detail-hero" [style.background-image]="'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%), url(' + getImageUrl(publication.photoUrls[0]) + ')'">
+    <div class="hero-content">
+      <a [routerLink]="publication.type === 'agro' ? '/agro-echos' : '/reportages'" class="back-btn anim-up">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+      <div class="meta-info anim-up delay-1">
+        <span class="badge" [class.badge-agro]="publication.type === 'agro'">
+          {{ publication.type === 'agro' ? 'Agro Échos' : 'Publi-reportage' }}
+        </span>
+        <span class="date"><i class="far fa-calendar-alt"></i> {{ publication.eventDate | date:'dd MMMM yyyy' }}</span>
+      </div>
+      <h1 class="anim-up delay-2">{{ publication.title }}</h1>
+      <div class="hero-footer anim-up delay-3">
+        <span class="location"><i class="fas fa-map-marker-alt"></i> {{ publication.location }}</span>
+        <span class="author"><i class="fas fa-user"></i> {{ publication.userDisplayName || 'Synergies Africa' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Content Section -->
+  <main class="detail-content">
+    <div class="content-layout">
+      <!-- Article Body -->
+      <article class="main-article anim-up">
+        <div class="article-lead">
+          <p>{{ publication.description }}</p>
+        </div>
+        <div class="article-divider"></div>
+        <div class="article-body">
+          {{ publication.content }}
+        </div>
+      </article>
+
+      <!-- Sidebar -->
+      <aside class="article-sidebar">
+        <!-- Gallery Card -->
+        <div class="sidebar-card gallery-card anim-up delay-1">
+          <div class="card-header">
+            <i class="fas fa-images"></i>
+            <h3>Photos ({{ publication.photoUrls.length }})</h3>
+          </div>
+          <div class="thumbnail-grid">
+            <div *ngFor="let photo of publication.photoUrls; let i = index" 
+                 class="thumb" 
+                 [class.thumb-featured]="i === 0"
+                 (click)="openImage(photo)">
+              <img [src]="getImageUrl(photo)" [alt]="publication.title">
+              <div class="thumb-overlay">
+                <i class="fas fa-expand"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="sidebar-card info-card anim-up delay-2">
+          <div class="info-row">
+            <i class="fas fa-tag"></i>
+            <div>
+              <span class="info-label">Catégorie</span>
+              <span class="info-value">{{ publication.type === 'agro' ? 'Agro Échos' : 'Publi-reportage' }}</span>
+            </div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-calendar-check"></i>
+            <div>
+              <span class="info-label">Date de l'événement</span>
+              <span class="info-value">{{ publication.eventDate | date:'dd MMMM yyyy' }}</span>
+            </div>
+          </div>
+          <div class="info-row">
+            <i class="fas fa-map-marker-alt"></i>
+            <div>
+              <span class="info-label">Lieu</span>
+              <span class="info-value">{{ publication.location }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Back Button -->
+        <a [routerLink]="publication.type === 'agro' ? '/agro-echos' : '/reportages'" class="sidebar-back-btn anim-up delay-3">
+          <i class="fas fa-arrow-left"></i> Retour à la liste
+        </a>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" *ngIf="selectedImage" (click)="closeImage()">
+  <button class="lightbox-close" (click)="closeImage()"><i class="fas fa-times"></i></button>
+  <img [src]="getImageUrl(selectedImage)" alt="Photo" (click)="$event.stopPropagation()">
+</div>
+
+<!-- Loading State -->
+<div class="loading-state" *ngIf="isLoading">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Chargement de votre article...</p>
+  </div>
+</div>
+
+<!-- Error State -->
+<div class="error-state" *ngIf="errorMessage">
+  <div class="error-card">
+    <div class="error-icon">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h2>Oups !</h2>
+    <p>{{ errorMessage }}</p>
+    <a routerLink="/" class="btn-primary-link">Retour à l'accueil</a>
+  </div>
+</div>

@@ -7,6 +7,7 @@ import { DashboardPagesComponent } from "./pages/dashboard-pages/dashboard-pages
 import { LoginPageComponent } from "./pages/login-page/login-page.component";
 import { authGuard } from "./guards/auth.guard";
 import { CreatePublicationPagesComponent } from "./pages/create-publication-pages/create-publication-pages.component";
+import { PublicationDetailPageComponent } from "./pages/publication-detail-page/publication-detail-page.component";
 
 export const routes: Routes = [
     {
@@ -38,5 +39,9 @@ export const routes: Routes = [
     {
         path: "connexion",
         component: LoginPageComponent,
+    },
+    {
+        path: "publication/:id",
+        component: PublicationDetailPageComponent,
     },
 ];

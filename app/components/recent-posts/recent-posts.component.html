@@ -1,0 +1,76 @@
+<section class="recent-posts">
+  <div class="container">
+    <div class="section-header">
+      <div class="header-content">
+        <span class="section-tag"><i class="fas fa-clock"></i> Dernières Publications</span>
+        <h2>Restez informé des actualités agroécologiques</h2>
+        <p>Découvrez les derniers reportages et actualités de notre communauté</p>
+      </div>
+      <div class="header-actions">
+        <a routerLink="/reportages" class="btn-outline">
+          Voir tous les reportages <i class="fas fa-arrow-right"></i>
+        </a>
+        <a routerLink="/agro-echos" class="btn-outline">
+          Voir tous les Agro-Échos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des publications...</p>
+    </div>
+
+    <!-- Posts Grid -->
+    <div *ngIf="!isLoading && recentPosts.length > 0" class="posts-grid">
+      <article *ngFor="let post of recentPosts; let i = index" 
+               class="post-card" 
+               [class.featured]="i === 0"
+               [style.animation-delay]="i * 0.1 + 's'">
+        <div class="post-image">
+          <img [src]="getImageUrl(post.photoUrls[0] || '')" [alt]="post.title">
+          <span class="post-type" [ngClass]="getTypeClass(post.type)">
+            {{ getTypeLabel(post.type) }}
+          </span>
+          <div class="post-overlay">
+            <a [routerLink]="['/publication', post.id]" class="overlay-link">
+              <i class="fas fa-eye"></i> Lire
+            </a>
+          </div>
+        </div>
+        <div class="post-content">
+          <div class="post-meta">
+            <span class="post-date">
+              <i class="far fa-calendar-alt"></i> 
+              {{ post.eventDate | date:'dd MMM yyyy' }}
+            </span>
+            <span class="post-location" *ngIf="post.location">
+              <i class="fas fa-map-marker-alt"></i> 
+              {{ post.location }}
+            </span>
+          </div>
+          <h3 [routerLink]="['/publication', post.id]">{{ post.title }}</h3>
+          <p class="post-description">{{ post.description }}</p>
+          <div class="post-footer">
+            <span class="post-author">
+              <i class="fas fa-user-circle"></i> {{ post.userDisplayName || 'Anonyme' }}
+            </span>
+            <a [routerLink]="['/publication', post.id]" class="read-more">
+              Lire la suite <i class="fas fa-chevron-right"></i>
+            </a>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && recentPosts.length === 0" class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-newspaper"></i>
+      </div>
+      <h3>Aucune publication pour le moment</h3>
+      <p>Les publications apparaîtront ici dès qu'elles seront ajoutées.</p>
+    </div>
+  </div>
+</section>

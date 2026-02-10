@@ -2,6 +2,7 @@ import { Component } from "@angular/core";
 
 @Component({
     selector: "app-techniques-agroeco",
+    standalone: true,
     imports: [],
     templateUrl: "./techniques-agroeco.component.html",
     styleUrl: "./techniques-agroeco.component.scss",

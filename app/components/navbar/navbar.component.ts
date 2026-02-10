@@ -1,7 +1,7 @@
 import { Component, HostListener, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router, RouterLink, RouterModule } from "@angular/router";
-import { User } from "firebase/auth";
+import { User } from "../../models/user.model";
 import { Observable } from "rxjs";
 import { AuthService } from "../../services/auth.service";
 
@@ -15,9 +15,10 @@ import { AuthService } from "../../services/auth.service";
 export class NavbarComponent {
     isMenuOpen = false;
     activeLink = "Accueil";
-    authService: AuthService = inject(AuthService);
-    user$: Observable<User | null> = this.authService.user$;
-    router: Router = inject(Router);
+    showLogoutConfirm = false;
+    authService = inject(AuthService);
+    user$: Observable<User | null> = this.authService.currentUser$;
+    router = inject(Router);
 
     toggleMenu(): void {
         this.isMenuOpen = !this.isMenuOpen;
@@ -25,7 +26,7 @@ export class NavbarComponent {
 
     setActive(linkName: string): void {
         this.activeLink = linkName;
-        this.isMenuOpen = false; // Ferme le menu mobile après sélection
+        this.isMenuOpen = false;
     }
 
     @HostListener("document:click", ["$event"])
@@ -43,13 +44,18 @@ export class NavbarComponent {
         }
     }
 
-    logout(): void {
-        this.authService.signOut().subscribe({
-            next: () => {
-                console.log("Déconnexion réussie");
-                this.router.navigate(["/"]); // Redirection vers la page d’accueil
-            },
-            error: (err) => console.error("Erreur de déconnexion:", err),
-        });
+    showLogoutDialog(): void {
+        this.showLogoutConfirm = true;
+        this.isMenuOpen = false;
+    }
+
+    cancelLogout(): void {
+        this.showLogoutConfirm = false;
+    }
+
+    confirmLogout(): void {
+        this.showLogoutConfirm = false;
+        this.authService.signOut();
+        this.router.navigate(["/"]);
     }
 }
