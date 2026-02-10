@@ -1,26 +1,26 @@
 <div class="login-container">
   <form class="login-form" (ngSubmit)="onSubmit()">
-    <h1>{{ mode === 'login' ? 'Connexion' : 'Inscription' }}</h1>
+    <h1>{{ mode === 'login' ? ('login.title' | translate) : ('login.register' | translate) }}</h1>
     
     <div *ngIf="mode === 'register'" class="form-group">
-      <input type="text" name="name" [(ngModel)]="name" placeholder="Nom complet" required>
+      <input type="text" name="name" [(ngModel)]="name" [placeholder]="'login.name' | translate" required>
     </div>
 
     <div class="form-group">
-      <input type="email" name="email" [(ngModel)]="email" placeholder="Email" required>
+      <input type="email" name="email" [(ngModel)]="email" [placeholder]="'login.email' | translate" required>
     </div>
 
     <div class="form-group">
-      <input type="password" name="pin" [(ngModel)]="pin" placeholder="Code PIN" required>
+      <input type="password" name="pin" [(ngModel)]="pin" [placeholder]="'login.pin' | translate" required>
     </div>
 
     <button type="submit" [disabled]="loading">
-      {{ loading ? 'Chargement...' : (mode === 'login' ? 'Se connecter' : "S'inscrire") }}
+      {{ loading ? ('login.loading' | translate) : (mode === 'login' ? ('login.submit' | translate) : ('login.submitRegister' | translate)) }}
     </button>
 
     <p class="toggle-mode">
-      {{ mode === 'login' ? "Pas encore de compte ?" : "Déjà un compte ?" }}
-      <a (click)="toggleMode()">{{ mode === 'login' ? "S'inscrire" : "Se connecter" }}</a>
+      {{ mode === 'login' ? ('login.noAccount' | translate) : ('login.hasAccount' | translate) }}
+      <a (click)="toggleMode()">{{ mode === 'login' ? ('login.submitRegister' | translate) : ('login.submit' | translate) }}</a>
     </p>
 
     <p class="error" *ngIf="error">{{ error }}</p>

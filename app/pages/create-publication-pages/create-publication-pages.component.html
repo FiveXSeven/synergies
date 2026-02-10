@@ -2,8 +2,8 @@
   <div class="form-card">
     <div class="header">
       <div class="title-area">
-        <h1>{{ isEditMode ? 'Modifier' : 'Nouvelle' }} Publication</h1>
-        <p class="subtitle">Partagez vos initiatives agroécologiques avec la communauté</p>
+        <h1>{{ isEditMode ? ('create.edit' | translate) : ('create.new' | translate) }}</h1>
+        <p class="subtitle">{{ 'create.subtitle' | translate }}</p>
       </div>
       <a routerLink="/board" class="btn-close" title="Fermer"><i class="fas fa-times"></i></a>
     </div>
@@ -20,41 +20,41 @@
       
       <!-- General Info Section -->
       <div class="form-section">
-        <h3><i class="fas fa-info-circle"></i> Informations Générales</h3>
+        <h3><i class="fas fa-info-circle"></i> {{ 'create.generalInfo' | translate }}</h3>
         <div class="grid-container">
           <div class="form-group full-width">
-            <label for="title">Titre de la publication</label>
-            <input type="text" id="title" formControlName="title" placeholder="Ex: Révolution verte à Korhogo">
+            <label for="title">{{ 'create.titleLabel' | translate }}</label>
+            <input type="text" id="title" formControlName="title" [placeholder]="'create.titlePlaceholder' | translate">
             <div *ngIf="publicationForm.get('title')?.touched && publicationForm.get('title')?.invalid" class="error">
-              Le titre est requis.
+              {{ 'create.errTitle' | translate }}
             </div>
           </div>
 
           <div class="form-group">
-            <label for="type">Type de contenu</label>
+            <label for="type">{{ 'create.type' | translate }}</label>
             <select id="type" formControlName="type">
-              <option value="">Sélectionnez un type</option>
-              <option value="publi">Publi-reportage</option>
-              <option value="agro">Agro Echos</option>
+              <option value="">{{ 'create.typeSelect' | translate }}</option>
+              <option value="publi">{{ 'create.typeReportage' | translate }}</option>
+              <option value="agro">{{ 'create.typeAgro' | translate }}</option>
             </select>
             <div *ngIf="publicationForm.get('type')?.touched && publicationForm.get('type')?.invalid" class="error">
-              Le type de contenu est requis.
+              {{ 'create.errType' | translate }}
             </div>
           </div>
 
           <div class="form-group">
-            <label for="date">Date de lèvement</label>
+            <label for="date">{{ 'create.date' | translate }}</label>
             <input type="date" id="date" formControlName="date">
             <div *ngIf="publicationForm.get('date')?.touched && publicationForm.get('date')?.invalid" class="error">
-              La date est requise.
+              {{ 'create.errDate' | translate }}
             </div>
           </div>
 
           <div class="form-group full-width">
-            <label for="location">Lieu / Région</label>
-            <input type="text" id="location" formControlName="location" placeholder="Ex: Côte d'Ivoire, Nord">
+            <label for="location">{{ 'create.location' | translate }}</label>
+            <input type="text" id="location" formControlName="location" [placeholder]="'create.locationPlaceholder' | translate">
             <div *ngIf="publicationForm.get('location')?.touched && publicationForm.get('location')?.invalid" class="error">
-              Le lieu est requis.
+              {{ 'create.errLocation' | translate }}
             </div>
           </div>
         </div>
@@ -62,51 +62,60 @@
 
       <!-- Content Section -->
       <div class="form-section">
-        <h3><i class="fas fa-pen"></i> Contenu de l'article</h3>
+        <h3><i class="fas fa-pen"></i> {{ 'create.content' | translate }}</h3>
         <div class="form-group">
-          <label for="description">Résumé court</label>
-          <textarea id="description" formControlName="description" rows="2" placeholder="Une brève introduction qui incite à la lecture..."></textarea>
+          <label for="description">{{ 'create.summary' | translate }}</label>
+          <textarea id="description" formControlName="description" rows="2" [placeholder]="'create.summaryPlaceholder' | translate"></textarea>
           <div *ngIf="publicationForm.get('description')?.touched && publicationForm.get('description')?.invalid" class="error">
-            Le résumé est requis.
+            {{ 'create.errSummary' | translate }}
           </div>
         </div>
 
         <div class="form-group">
-          <label for="content">Corps de l'article</label>
-          <textarea id="content" formControlName="content" rows="10" placeholder="Racontez votre histoire en détail ici..."></textarea>
+          <label for="content">{{ 'create.body' | translate }}</label>
+          <textarea id="content" formControlName="content" rows="10" [placeholder]="'create.bodyPlaceholder' | translate"></textarea>
           <div *ngIf="publicationForm.get('content')?.touched && publicationForm.get('content')?.invalid" class="error">
-            Le contenu de l'article est requis.
+            {{ 'create.errContent' | translate }}
           </div>
         </div>
       </div>
 
       <!-- Media Section -->
       <div class="form-section">
-        <h3><i class="fas fa-camera"></i> Médias</h3>
-        <div class="upload-area" [class.has-files]="selectedFiles && selectedFiles.length > 0">
+        <h3><i class="fas fa-camera"></i> {{ 'create.media' | translate }}</h3>
+        <div class="upload-area" [class.has-files]="imagePreviews.length > 0"
+             (dragover)="onDragOver($event)" (drop)="onDrop($event)">
           <input type="file" id="photos" (change)="onFileSelected($event)" accept="image/*" multiple hidden #fileInput>
           <div class="upload-placeholder" (click)="fileInput.click()">
             <i class="fas fa-cloud-upload-alt"></i>
-            <p *ngIf="!selectedFiles || selectedFiles.length === 0">Cliquez pour ajouter des photos (max 4)</p>
-            <p *ngIf="selectedFiles && selectedFiles.length > 0">{{ selectedFiles.length }} fichier(s) sélectionné(s)</p>
-            <span>JPG, PNG ou WebP</span>
+            <p>{{ 'create.upload' | translate }}</p>
+            <span>{{ 'create.uploadFormats' | translate }}</span>
+          </div>
+        </div>
+        <!-- Image Previews -->
+        <div class="image-previews" *ngIf="imagePreviews.length > 0">
+          <div class="preview-item" *ngFor="let preview of imagePreviews; let i = index">
+            <img [src]="preview" alt="Preview">
+            <button type="button" class="remove-preview" (click)="removePreview(i)">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
         </div>
         <div *ngIf="publicationForm.get('photos')?.touched && publicationForm.get('photos')?.invalid" class="error">
-          <small *ngIf="publicationForm.get('photos')?.errors?.['required']">Au moins une photo est requise.</small>
-          <small *ngIf="publicationForm.get('photos')?.errors?.['maxFilesExceeded']">Maximum 4 photos autorisées.</small>
+          <small *ngIf="publicationForm.get('photos')?.errors?.['required']">{{ 'create.errPhotoReq' | translate }}</small>
+          <small *ngIf="publicationForm.get('photos')?.errors?.['maxFilesExceeded']">{{ 'create.errPhotoMax' | translate }}</small>
         </div>
       </div>
 
       <!-- Submit Section -->
       <div class="form-actions">
-        <button type="button" class="btn btn-ghost" routerLink="/board">Annuler</button>
+        <button type="button" class="btn btn-ghost" routerLink="/board">{{ 'create.cancel' | translate }}</button>
         <button type="submit" class="btn btn-primary" [disabled]="isLoading" (click)="onSubmit($event)">
           <span *ngIf="!isLoading">
             <i class="fas" [class.fa-plus]="!isEditMode" [class.fa-save]="isEditMode"></i>
-            {{ isEditMode ? 'Enregistrer les modifications' : "Publier l'article" }}
+            {{ isEditMode ? ('create.save' | translate) : ('create.publish' | translate) }}
           </span>
-          <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin"></i> Traitement...</span>
+          <span *ngIf="isLoading"><i class="fas fa-spinner fa-spin"></i> {{ 'create.processing' | translate }}</span>
         </button>
       </div>
     </form>

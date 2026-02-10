@@ -1,20 +1,22 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Publication } from '../../models/publication.model';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { PublicationService } from '../../services/publication.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-reportage-card',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, TranslatePipe],
   templateUrl: './reportage-card.component.html',
   styleUrl: './reportage-card.component.scss'
 })
 export class ReportageCardComponent {
   @Input() publication!: Publication;
+  private pubService = inject(PublicationService);
 
   getImageUrl(path: string): string {
-    if (path.startsWith('http')) return path;
-    return `http://localhost:3000${path}`;
+    return this.pubService.getImageUrl(path);
   }
 }

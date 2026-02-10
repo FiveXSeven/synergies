@@ -3,11 +3,12 @@ import { CommonModule } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { PublicationService } from "../../services/publication.service";
 import { Publication } from "../../models/publication.model";
+import { TranslatePipe } from "../../pipes/translate.pipe";
 
 @Component({
     selector: "app-recent-posts",
     standalone: true,
-    imports: [CommonModule, RouterLink],
+    imports: [CommonModule, RouterLink, TranslatePipe],
     templateUrl: "./recent-posts.component.html",
     styleUrl: "./recent-posts.component.scss",
 })
@@ -17,22 +18,24 @@ export class RecentPostsComponent implements OnInit {
     isLoading = true;
 
     ngOnInit(): void {
-        this.publicationService.getPublications().subscribe(docs => {
-            // Get the 6 most recent posts, sorted by date
-            this.recentPosts = docs
-                .sort((a, b) => 
-                    new Date(b.eventDate || b.createdAt).getTime() - 
-                    new Date(a.eventDate || a.createdAt).getTime()
-                )
-                .slice(0, 6);
-            this.isLoading = false;
+        this.publicationService.getPublications().subscribe({
+            next: (docs) => {
+                this.recentPosts = docs
+                    .sort((a, b) => 
+                        new Date(b.eventDate || b.createdAt).getTime() - 
+                        new Date(a.eventDate || a.createdAt).getTime()
+                    )
+                    .slice(0, 6);
+                this.isLoading = false;
+            },
+            error: () => {
+                this.isLoading = false;
+            }
         });
     }
 
     getImageUrl(path: string): string {
-        if (!path) return 'https://via.placeholder.com/400x300?text=Synergies';
-        if (path.startsWith('http')) return path;
-        return `http://localhost:3000${path}`;
+        return this.publicationService.getImageUrl(path);
     }
 
     getTypeLabel(type: string): string {

@@ -3,17 +3,20 @@ import { FormsModule } from "@angular/forms";
 import { NgIf } from "@angular/common";
 import { AuthService } from "../../services/auth.service";
 import { Router } from "@angular/router";
+import { TranslatePipe } from "../../pipes/translate.pipe";
+import { SeoService } from "../../services/seo.service";
 
 @Component({
     selector: "app-login-page",
     standalone: true,
-    imports: [FormsModule, NgIf],
+    imports: [FormsModule, NgIf, TranslatePipe],
     templateUrl: "./login-page.component.html",
     styleUrl: "./login-page.component.scss",
 })
 export class LoginPageComponent {
     authService = inject(AuthService);
     router = inject(Router);
+    private seo = inject(SeoService);
 
     email: string = "";
     pin: string = "";
@@ -21,6 +24,10 @@ export class LoginPageComponent {
     mode: 'login' | 'register' = 'login';
     loading: boolean = false;
     error: string = "";
+
+    constructor() {
+        this.seo.setPageMeta('Connexion', 'Connectez-vous à Synergies Africa');
+    }
 
     toggleMode(): void {
         this.mode = this.mode === 'login' ? 'register' : 'login';

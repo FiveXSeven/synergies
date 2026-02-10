@@ -57,80 +57,150 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // 1. Auth: Register (Set PIN)
 app.post('/api/auth/register', async (req: any, res: any): Promise<void> => {
-  const { email, pin, name } = req.body;
-  if (!email || !pin) {
-    res.status(400).json({ error: 'Email et PIN requis' });
-    return;
+  try {
+    const { email, pin, name } = req.body;
+    if (!email || !pin) {
+      res.status(400).json({ error: 'Email et PIN requis' });
+      return;
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      res.status(400).json({ error: 'Cet utilisateur existe déjà' });
+      return;
+    }
+
+    const hashedPin = await bcrypt.hash(pin, 10);
+    const user = await prisma.user.create({
+      data: { email, pin: hashedPin, name: name || email.split('@')[0] }
+    });
+
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
+    res.json({ token, user });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
   }
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser) {
-    res.status(400).json({ error: 'Cet utilisateur existe déjà' });
-    return;
-  }
-
-  const hashedPin = await bcrypt.hash(pin, 10);
-  const user = await prisma.user.create({
-    data: { email, pin: hashedPin, name: name || email.split('@')[0] }
-  });
-
-  const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
-  res.json({ token, user });
 });
 
 // 2. Auth: Login
 app.post('/api/auth/login', async (req: any, res: any): Promise<void> => {
-  const { email, pin } = req.body;
-  if (!email || !pin) {
-    res.status(400).json({ error: 'Email et PIN requis' });
-    return;
-  }
+  try {
+    const { email, pin } = req.body;
+    if (!email || !pin) {
+      res.status(400).json({ error: 'Email et PIN requis' });
+      return;
+    }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) {
-    res.status(400).json({ error: 'Utilisateur non trouvé' });
-    return;
-  }
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      res.status(400).json({ error: 'Utilisateur non trouvé' });
+      return;
+    }
 
-  const validPin = await bcrypt.compare(pin, user.pin);
-  if (!validPin) {
-    res.status(400).json({ error: 'PIN incorrect' });
-    return;
-  }
+    const validPin = await bcrypt.compare(pin, user.pin);
+    if (!validPin) {
+      res.status(400).json({ error: 'PIN incorrect' });
+      return;
+    }
 
-  const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
-  res.json({ token, user });
+    const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, JWT_SECRET);
+    res.json({ token, user });
+  } catch (error) {
+    console.error('Error logging in:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
 });
 
-// 3. Publications: Get All
-app.get('/api/publications', async (req, res) => {
-  const publications = await prisma.publication.findMany({
-    orderBy: { createdAt: 'desc' }
-  });
-  const formatted = publications.map((p: any) => ({
-    ...p,
-    photoUrls: JSON.parse(p.photoUrls)
-  }));
-  res.json(formatted);
+// 3. Publications: Get All (with pagination & optional search)
+app.get('/api/publications', async (req: any, res: any): Promise<void> => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const type = req.query.type || undefined;
+    const search = req.query.search || undefined;
+    const userId = req.query.userId || undefined;
+
+    const where: any = {};
+    if (type) where.type = type;
+    if (userId) where.userId = userId;
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { description: { contains: search } },
+        { location: { contains: search } },
+        { userDisplayName: { contains: search } }
+      ];
+    }
+
+    const [publications, total] = await Promise.all([
+      prisma.publication.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.publication.count({ where })
+    ]);
+
+    const formatted = publications.map((p: any) => ({
+      ...p,
+      photoUrls: JSON.parse(p.photoUrls)
+    }));
+
+    res.json({
+      data: formatted,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching publications:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des publications' });
+  }
 });
 
 // 3.1 Publications: Get One
-app.get('/api/publications/:id', async (req, res) => {
-  const { id } = req.params;
-  const publication = await prisma.publication.findUnique({
-    where: { id }
-  });
-  
-  if (!publication) {
-    res.status(404).json({ error: 'Publication non trouvée' });
-    return;
-  }
+app.get('/api/publications/:id', async (req: any, res: any): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const publication = await prisma.publication.findUnique({
+      where: { id }
+    });
+    
+    if (!publication) {
+      res.status(404).json({ error: 'Publication non trouvée' });
+      return;
+    }
 
-  const formatted = {
-    ...publication,
-    photoUrls: JSON.parse(publication.photoUrls)
-  };
-  res.json(formatted);
+    const formatted = {
+      ...publication,
+      photoUrls: JSON.parse(publication.photoUrls)
+    };
+    res.json(formatted);
+  } catch (error) {
+    console.error('Error fetching publication:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération de la publication' });
+  }
+});
+
+// 3.2 Publications: Stats (for dashboard)
+app.get('/api/stats', authenticateToken, async (req: any, res: any): Promise<void> => {
+  try {
+    const userId = req.user.id;
+    const [total, reportages, agroEchos] = await Promise.all([
+      prisma.publication.count({ where: { userId } }),
+      prisma.publication.count({ where: { userId, type: 'publi' } }),
+      prisma.publication.count({ where: { userId, type: 'agro' } })
+    ]);
+    res.json({ total, reportages, agroEchos });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des statistiques' });
+  }
 });
 
 // 4. Publications: Create
@@ -211,20 +281,73 @@ app.put('/api/publications/:id', authenticateToken, upload.array('photos'), asyn
 
 // 6. Publications: Delete
 app.delete('/api/publications/:id', authenticateToken, async (req: any, res: any): Promise<void> => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const existing = await prisma.publication.findUnique({ where: { id } });
-  if (!existing) {
-    res.status(404).json({ error: 'Publication non trouvée' });
-    return;
-  }
-  if (existing.userId !== req.user.id) {
-    res.status(403).json({ error: 'Non autorisé' });
-    return;
-  }
+    const existing = await prisma.publication.findUnique({ where: { id } });
+    if (!existing) {
+      res.status(404).json({ error: 'Publication non trouvée' });
+      return;
+    }
+    if (existing.userId !== req.user.id) {
+      res.status(403).json({ error: 'Non autorisé' });
+      return;
+    }
 
-  await prisma.publication.delete({ where: { id } });
-  res.json({ message: 'Publication supprimée' });
+    await prisma.publication.delete({ where: { id } });
+    res.json({ message: 'Publication supprimée' });
+  } catch (error) {
+    console.error('Error deleting publication:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression' });
+  }
+});
+
+// 7. Comments: Get comments for a publication
+app.get('/api/publications/:id/comments', async (req: any, res: any): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const comments = await prisma.comment.findMany({
+      where: { publicationId: id },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(comments);
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des commentaires' });
+  }
+});
+
+// 8. Comments: Add a comment (no auth required)
+app.post('/api/publications/:id/comments', async (req: any, res: any): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { authorName, content } = req.body;
+
+    if (!authorName || !content) {
+      res.status(400).json({ error: 'Nom et contenu requis' });
+      return;
+    }
+
+    // Verify publication exists
+    const publication = await prisma.publication.findUnique({ where: { id } });
+    if (!publication) {
+      res.status(404).json({ error: 'Publication non trouvée' });
+      return;
+    }
+
+    const comment = await prisma.comment.create({
+      data: {
+        authorName: authorName.trim(),
+        content: content.trim(),
+        publicationId: id
+      }
+    });
+
+    res.json(comment);
+  } catch (error) {
+    console.error('Error creating comment:', error);
+    res.status(500).json({ error: 'Erreur lors de la création du commentaire' });
+  }
 });
 
 app.listen(PORT, () => {

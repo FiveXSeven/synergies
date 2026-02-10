@@ -3,11 +3,11 @@
   <header class="detail-hero" [style.background-image]="'linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%), url(' + getImageUrl(publication.photoUrls[0]) + ')'">
     <div class="hero-content">
       <a [routerLink]="publication.type === 'agro' ? '/agro-echos' : '/reportages'" class="back-btn anim-up">
-        <i class="fas fa-arrow-left"></i> Retour
+        <i class="fas fa-arrow-left"></i> {{ 'detail.back' | translate }}
       </a>
       <div class="meta-info anim-up delay-1">
         <span class="badge" [class.badge-agro]="publication.type === 'agro'">
-          {{ publication.type === 'agro' ? 'Agro Échos' : 'Publi-reportage' }}
+          {{ publication.type === 'agro' ? ('detail.agro' | translate) : ('detail.reportage' | translate) }}
         </span>
         <span class="date"><i class="far fa-calendar-alt"></i> {{ publication.eventDate | date:'dd MMMM yyyy' }}</span>
       </div>
@@ -28,9 +28,13 @@
           <p>{{ publication.description }}</p>
         </div>
         <div class="article-divider"></div>
-        <div class="article-body">
-          {{ publication.content }}
-        </div>
+        <div class="article-body" [innerHTML]="publication.content"></div>
+
+        <!-- Social Share -->
+        <app-social-share [url]="shareUrl" [title]="publication.title" />
+
+        <!-- Comments -->
+        <app-comment-section [publicationId]="publication.id || ''" />
       </article>
 
       <!-- Sidebar -->
@@ -39,13 +43,13 @@
         <div class="sidebar-card gallery-card anim-up delay-1">
           <div class="card-header">
             <i class="fas fa-images"></i>
-            <h3>Photos ({{ publication.photoUrls.length }})</h3>
+            <h3>{{ 'detail.photos' | translate }} ({{ publication.photoUrls.length }})</h3>
           </div>
           <div class="thumbnail-grid">
             <div *ngFor="let photo of publication.photoUrls; let i = index" 
                  class="thumb" 
                  [class.thumb-featured]="i === 0"
-                 (click)="openImage(photo)">
+                 (click)="openImage(photo, i)">
               <img [src]="getImageUrl(photo)" [alt]="publication.title">
               <div class="thumb-overlay">
                 <i class="fas fa-expand"></i>
@@ -59,21 +63,21 @@
           <div class="info-row">
             <i class="fas fa-tag"></i>
             <div>
-              <span class="info-label">Catégorie</span>
-              <span class="info-value">{{ publication.type === 'agro' ? 'Agro Échos' : 'Publi-reportage' }}</span>
+              <span class="info-label">{{ 'detail.category' | translate }}</span>
+              <span class="info-value">{{ publication.type === 'agro' ? ('detail.agro' | translate) : ('detail.reportage' | translate) }}</span>
             </div>
           </div>
           <div class="info-row">
             <i class="fas fa-calendar-check"></i>
             <div>
-              <span class="info-label">Date de l'événement</span>
+              <span class="info-label">{{ 'detail.eventDate' | translate }}</span>
               <span class="info-value">{{ publication.eventDate | date:'dd MMMM yyyy' }}</span>
             </div>
           </div>
           <div class="info-row">
             <i class="fas fa-map-marker-alt"></i>
             <div>
-              <span class="info-label">Lieu</span>
+              <span class="info-label">{{ 'detail.location' | translate }}</span>
               <span class="info-value">{{ publication.location }}</span>
             </div>
           </div>
@@ -81,24 +85,30 @@
 
         <!-- Back Button -->
         <a [routerLink]="publication.type === 'agro' ? '/agro-echos' : '/reportages'" class="sidebar-back-btn anim-up delay-3">
-          <i class="fas fa-arrow-left"></i> Retour à la liste
+          <i class="fas fa-arrow-left"></i> {{ 'detail.backToList' | translate }}
         </a>
       </aside>
     </div>
   </main>
 </div>
 
-<!-- Lightbox -->
+<!-- Lightbox with navigation -->
 <div class="lightbox-overlay" *ngIf="selectedImage" (click)="closeImage()">
   <button class="lightbox-close" (click)="closeImage()"><i class="fas fa-times"></i></button>
+  <button class="lightbox-nav lightbox-prev" *ngIf="selectedImageIndex > 0" (click)="$event.stopPropagation(); prevImage()">
+    <i class="fas fa-chevron-left"></i>
+  </button>
   <img [src]="getImageUrl(selectedImage)" alt="Photo" (click)="$event.stopPropagation()">
+  <button class="lightbox-nav lightbox-next" *ngIf="publication && selectedImageIndex < publication.photoUrls.length - 1" (click)="$event.stopPropagation(); nextImage()">
+    <i class="fas fa-chevron-right"></i>
+  </button>
 </div>
 
 <!-- Loading State -->
 <div class="loading-state" *ngIf="isLoading">
   <div class="loading-spinner">
     <div class="spinner"></div>
-    <p>Chargement de votre article...</p>
+    <p>{{ 'detail.loading' | translate }}</p>
   </div>
 </div>
 
@@ -108,8 +118,8 @@
     <div class="error-icon">
       <i class="fas fa-exclamation-triangle"></i>
     </div>
-    <h2>Oups !</h2>
+    <h2>{{ 'detail.error' | translate }}</h2>
     <p>{{ errorMessage }}</p>
-    <a routerLink="/" class="btn-primary-link">Retour à l'accueil</a>
+    <a routerLink="/" class="btn-primary-link">{{ 'detail.backHome' | translate }}</a>
   </div>
 </div>

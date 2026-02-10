@@ -8,6 +8,7 @@ import { LoginPageComponent } from "./pages/login-page/login-page.component";
 import { authGuard } from "./guards/auth.guard";
 import { CreatePublicationPagesComponent } from "./pages/create-publication-pages/create-publication-pages.component";
 import { PublicationDetailPageComponent } from "./pages/publication-detail-page/publication-detail-page.component";
+import { NotFoundComponent } from "./components/not-found/not-found.component";
 
 export const routes: Routes = [
     {
@@ -43,5 +44,9 @@ export const routes: Routes = [
     {
         path: "publication/:id",
         component: PublicationDetailPageComponent,
+    },
+    {
+        path: "**",
+        component: NotFoundComponent,
     },
 ];

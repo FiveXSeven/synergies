@@ -1,23 +1,48 @@
 <section class="page-header">
-  <app-header-page title="Tableau de bord"
-    subtitle="Gérez vos reportages et actualités sur l'agroécologie" />
+  <app-header-page [title]="'dashboard.title' | translate"
+    [subtitle]="'dashboard.subtitle' | translate" />
 </section>
 
 <section class="dashboard container">
+  <!-- Stats Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-newspaper"></i></div>
+      <div class="stat-info">
+        <span class="stat-number">{{ stats.total }}</span>
+        <span class="stat-label">{{ 'dashboard.totalPubs' | translate }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-green"><i class="fas fa-camera"></i></div>
+      <div class="stat-info">
+        <span class="stat-number">{{ stats.reportages }}</span>
+        <span class="stat-label">{{ 'dashboard.reportages' | translate }}</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-blue"><i class="fas fa-rss"></i></div>
+      <div class="stat-info">
+        <span class="stat-number">{{ stats.agroEchos }}</span>
+        <span class="stat-label">{{ 'dashboard.agroEchos' | translate }}</span>
+      </div>
+    </div>
+  </div>
+
   <div class="actions">
-    <a routerLink="/create-publication" class="btn btn-primary"><i class="fas fa-plus"></i> Ajouter une publication</a>
-    <button (click)="showLogoutDialog()" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+    <a routerLink="/create-publication" class="btn btn-primary"><i class="fas fa-plus"></i> {{ 'dashboard.add' | translate }}</a>
+    <button (click)="showLogoutDialog()" class="btn btn-secondary"><i class="fas fa-sign-out-alt"></i> {{ 'dashboard.logout' | translate }}</button>
   </div>
 
   <div class="publications-list">
-    <h3>Mes Publications</h3>
+    <h3>{{ 'dashboard.myPubs' | translate }}</h3>
     <table>
       <thead>
         <tr>
-          <th>Titre</th>
-          <th>Type</th>
-          <th>Date</th>
-          <th>Actions</th>
+          <th>{{ 'dashboard.colTitle' | translate }}</th>
+          <th>{{ 'dashboard.colType' | translate }}</th>
+          <th>{{ 'dashboard.colDate' | translate }}</th>
+          <th>{{ 'dashboard.colActions' | translate }}</th>
         </tr>
       </thead>
       <tbody>
@@ -26,13 +51,13 @@
           <td>{{ pub.type === 'publi' ? 'Reportage' : 'Agro-écho' }}</td>
           <td>{{ pub.eventDate | date:'dd/MM/yyyy' }}</td>
           <td>
-            <a [routerLink]="['/create-publication']" [queryParams]="{ id: pub.id }" class="btn-edit"><i class="fas fa-edit"></i> Modifier</a>
-            <button (click)="showDeleteDialog(pub)" class="btn-delete"><i class="fas fa-trash-alt"></i> Supprimer</button>
+            <a [routerLink]="['/create-publication']" [queryParams]="{ id: pub.id }" class="btn-edit"><i class="fas fa-edit"></i> {{ 'dashboard.edit' | translate }}</a>
+            <button (click)="showDeleteDialog(pub)" class="btn-delete"><i class="fas fa-trash-alt"></i> {{ 'dashboard.delete' | translate }}</button>
           </td>
         </tr>
       </tbody>
     </table>
-    <p *ngIf="publications.length === 0">Vous n'avez pas encore de publications.</p>
+    <p *ngIf="publications.length === 0">{{ 'dashboard.noPubs' | translate }}</p>
   </div>
 </section>
 
@@ -42,11 +67,11 @@
     <div class="dialog-icon dialog-icon-danger">
       <i class="fas fa-trash-alt"></i>
     </div>
-    <h3>Supprimer la publication</h3>
-    <p>Êtes-vous sûr de vouloir supprimer <strong>« {{ publicationToDelete?.title }} »</strong> ? Cette action est irréversible.</p>
+    <h3>{{ 'dashboard.confirmDeleteTitle' | translate }}</h3>
+    <p>{{ 'dashboard.confirmDeleteMsg' | translate }} <strong>« {{ publicationToDelete?.title }} »</strong> ? {{ 'dashboard.irreversible' | translate }}</p>
     <div class="dialog-actions">
-      <button class="dialog-btn dialog-btn-cancel" (click)="cancelDelete()">Annuler</button>
-      <button class="dialog-btn dialog-btn-danger" (click)="confirmDelete()">Supprimer</button>
+      <button class="dialog-btn dialog-btn-cancel" (click)="cancelDelete()">{{ 'dashboard.cancel' | translate }}</button>
+      <button class="dialog-btn dialog-btn-danger" (click)="confirmDelete()">{{ 'dashboard.delete' | translate }}</button>
     </div>
   </div>
 </div>
@@ -57,11 +82,11 @@
     <div class="dialog-icon">
       <i class="fas fa-sign-out-alt"></i>
     </div>
-    <h3>Déconnexion</h3>
-    <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+    <h3>{{ 'logout.title' | translate }}</h3>
+    <p>{{ 'logout.msg' | translate }}</p>
     <div class="dialog-actions">
-      <button class="dialog-btn dialog-btn-cancel" (click)="cancelLogout()">Annuler</button>
-      <button class="dialog-btn dialog-btn-confirm" (click)="confirmLogout()">Se déconnecter</button>
+      <button class="dialog-btn dialog-btn-cancel" (click)="cancelLogout()">{{ 'logout.cancel' | translate }}</button>
+      <button class="dialog-btn dialog-btn-confirm" (click)="confirmLogout()">{{ 'logout.confirm' | translate }}</button>
     </div>
   </div>
 </div>

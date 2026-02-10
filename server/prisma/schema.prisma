@@ -20,16 +20,26 @@ model User {
 }
 
 model Publication {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   title           String
   description     String
-  type            String   // 'reportage' | 'agro-echo' etc.
-  content         String   @default("")
-  location        String   @default("")
-  photoUrls       String   // Simplified: Store as JSON string or comma-separated
+  type            String    // 'reportage' | 'agro-echo' etc.
+  content         String    @default("")
+  location        String    @default("")
+  photoUrls       String    // Simplified: Store as JSON string or comma-separated
   userId          String
   userDisplayName String
-  user            User     @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id])
   eventDate       DateTime?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
+  comments        Comment[]
+}
+
+model Comment {
+  id            String      @id @default(uuid())
+  authorName    String
+  content       String
+  publicationId String
+  publication   Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
 }

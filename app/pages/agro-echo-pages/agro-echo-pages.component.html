@@ -1,5 +1,6 @@
 <section class="page-header">
-  <app-header-page title="AGRO-ECHOS" subtitle="L'actualité de l'agroécologie en Afrique de l'Ouest" />
+  <app-header-page [title]="'agro.title' | translate"
+    [subtitle]="'agro.subtitle' | translate" />
 </section>
 
 <!-- Filter & Search Section -->
@@ -8,27 +9,27 @@
     <div class="filter-bar">
       <div class="search-box">
         <i class="fas fa-search"></i>
-        <input type="text" placeholder="Rechercher une actualité..." [(ngModel)]="searchQuery" (input)="filterPublications()">
+        <input type="text" [placeholder]="'agro.search' | translate" [(ngModel)]="searchQuery" (input)="filterPublications()">
         <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()">
           <i class="fas fa-times"></i>
         </button>
       </div>
       <div class="filter-chips">
         <button class="chip" [class.active]="sortBy === 'recent'" (click)="setSortBy('recent')">
-          <i class="fas fa-clock"></i> Récents
+          <i class="fas fa-clock"></i> {{ 'filter.recent' | translate }}
         </button>
         <button class="chip" [class.active]="sortBy === 'oldest'" (click)="setSortBy('oldest')">
-          <i class="fas fa-history"></i> Anciens
+          <i class="fas fa-history"></i> {{ 'filter.oldest' | translate }}
         </button>
         <button class="chip" [class.active]="sortBy === 'alpha'" (click)="setSortBy('alpha')">
-          <i class="fas fa-sort-alpha-down"></i> A-Z
+          <i class="fas fa-sort-alpha-down"></i> {{ 'filter.az' | translate }}
         </button>
       </div>
     </div>
     <div class="results-info" *ngIf="searchQuery || sortBy !== 'recent'">
-      <span class="results-count">{{ filteredPublications.length }} résultat(s)</span>
+      <span class="results-count">{{ filteredPublications.length }} {{ 'filter.results' | translate }}</span>
       <button class="reset-btn" (click)="resetFilters()">
-        <i class="fas fa-undo"></i> Réinitialiser
+        <i class="fas fa-undo"></i> {{ 'filter.reset' | translate }}
       </button>
     </div>
   </div>
@@ -37,18 +38,24 @@
 <section class="agro-echos-featured">
   <div class="container">
     <div class="mainContainer">
-      <app-agro-echo-card *ngFor="let pub of filteredPublications" [publication]="pub" />
+      <app-agro-echo-card *ngFor="let pub of paginatedPublications" [publication]="pub" />
+
+      <!-- Pagination -->
+      <app-pagination *ngIf="totalPages > 1"
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        (pageChange)="onPageChange($event)" />
       
       <!-- Empty State -->
       <div *ngIf="filteredPublications.length === 0" class="empty-state">
         <div class="empty-icon">
           <i class="fas fa-search"></i>
         </div>
-        <h3>Aucune actualité trouvée</h3>
-        <p *ngIf="searchQuery">Aucun résultat pour "{{ searchQuery }}"</p>
-        <p *ngIf="!searchQuery">Aucune actualité disponible pour le moment.</p>
+        <h3>{{ 'filter.noAgro' | translate }}</h3>
+        <p *ngIf="searchQuery">{{ 'filter.noResult' | translate }} "{{ searchQuery }}"</p>
+        <p *ngIf="!searchQuery">{{ 'filter.noAgroAvail' | translate }}</p>
         <button class="btn btn-primary" *ngIf="searchQuery" (click)="resetFilters()">
-          <i class="fas fa-undo"></i> Réinitialiser la recherche
+          <i class="fas fa-undo"></i> {{ 'filter.resetSearch' | translate }}
         </button>
       </div>
     </div>

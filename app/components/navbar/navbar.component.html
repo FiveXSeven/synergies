@@ -4,6 +4,16 @@
   </div>
 
   <nav>
+    <!-- Search toggle -->
+    <button class="search-toggle" (click)="toggleSearch()" aria-label="Search">
+      <i class="fas fa-search"></i>
+    </button>
+
+    <!-- Language toggle -->
+    <button class="lang-toggle" (click)="toggleLanguage()">
+      {{ 'nav.lang' | translate }}
+    </button>
+
     <button id="menu-toggle" [attr.aria-expanded]="isMenuOpen" aria-label="Menu" (click)="toggleMenu()">
       <span class="sr-only">Menu</span>
       <span class="hamburger" [class.active]="isMenuOpen"></span>
@@ -12,38 +22,52 @@
     <ul id="main-menu" [class.active]="isMenuOpen" (click)="$event.stopPropagation()">
       <li>
         <a routerLink="/" [class.active]="activeLink === 'Accueil'" (click)="setActive('Accueil')">
-          Accueil
+          {{ 'nav.home' | translate }}
         </a>
       </li>
       <li>
         <a routerLink="/reportages" [class.active]="activeLink === 'Publi-Reportages'"
           (click)="setActive('Publi-Reportages')">
-          Publi-Reportages
+          {{ 'nav.reportages' | translate }}
         </a>
       </li>
       <li>
         <a routerLink="/agro-echos" [class.active]="activeLink === 'AGRO-ECHOS'" (click)="setActive('AGRO-ECHOS')">
-          Agro-echos
+          {{ 'nav.agroEchos' | translate }}
         </a>
       </li>
       <li>
         <a routerLink="/contact" [class.active]="activeLink === 'Contact'" (click)="setActive('Contact')">
-          Contact
+          {{ 'nav.contact' | translate }}
         </a>
       </li>
       <li *ngIf="user$ | async as user">
         <a routerLink="/board" [class.active]="activeLink === 'Dashboard'" (click)="setActive('Dashboard')">
-          Dashboard
+          {{ 'nav.dashboard' | translate }}
         </a>
       </li>
       <li *ngIf="user$ | async as user">
         <a [class.active]="activeLink === 'Déconnexion'" (click)="showLogoutDialog()">
-          Déconnexion
+          {{ 'nav.logout' | translate }}
         </a>
       </li>
     </ul>
   </nav>
 </header>
+
+<!-- Global Search Bar -->
+<div class="global-search-overlay" *ngIf="showSearch" (click)="toggleSearch()">
+  <div class="global-search-container" (click)="$event.stopPropagation()">
+    <form (ngSubmit)="onSearch()" class="global-search-form">
+      <i class="fas fa-search"></i>
+      <input type="text" [(ngModel)]="searchQuery" name="search"
+        [placeholder]="'nav.search' | translate" autofocus>
+      <button type="button" class="close-search" (click)="toggleSearch()">
+        <i class="fas fa-times"></i>
+      </button>
+    </form>
+  </div>
+</div>
 
 <!-- Logout Confirmation Dialog -->
 <div class="dialog-overlay" *ngIf="showLogoutConfirm" (click)="cancelLogout()">
@@ -51,11 +75,11 @@
     <div class="dialog-icon">
       <i class="fas fa-sign-out-alt"></i>
     </div>
-    <h3>Déconnexion</h3>
-    <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+    <h3>{{ 'logout.title' | translate }}</h3>
+    <p>{{ 'logout.msg' | translate }}</p>
     <div class="dialog-actions">
-      <button class="dialog-btn dialog-btn-cancel" (click)="cancelLogout()">Annuler</button>
-      <button class="dialog-btn dialog-btn-confirm" (click)="confirmLogout()">Se déconnecter</button>
+      <button class="dialog-btn dialog-btn-cancel" (click)="cancelLogout()">{{ 'logout.cancel' | translate }}</button>
+      <button class="dialog-btn dialog-btn-confirm" (click)="confirmLogout()">{{ 'logout.confirm' | translate }}</button>
     </div>
   </div>
 </div>

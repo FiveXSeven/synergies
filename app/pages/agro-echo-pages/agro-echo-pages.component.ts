@@ -1,25 +1,39 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { AgroEchoCardComponent } from '../../components/agro-echo-card/agro-echo-card.component';
 import { HeaderPageComponent } from '../../components/header-page/header-page.component';
+import { PaginationComponent } from '../../components/pagination/pagination.component';
 import { PublicationService } from "../../services/publication.service";
 import { Publication } from "../../models/publication.model";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { TranslatePipe } from '../../pipes/translate.pipe';
+import { SeoService } from '../../services/seo.service';
 
 @Component({
   selector: 'app-agro-echo-pages',
   standalone: true,
-  imports: [AgroEchoCardComponent, HeaderPageComponent, CommonModule, FormsModule],
+  imports: [AgroEchoCardComponent, HeaderPageComponent, PaginationComponent, CommonModule, FormsModule, TranslatePipe],
   templateUrl: './agro-echo-pages.component.html',
   styleUrl: './agro-echo-pages.component.scss'
 })
 export class AgroEchoPagesComponent implements OnInit {
     publicationService = inject(PublicationService);
+    private seo = inject(SeoService);
     publications: Publication[] = [];
     filteredPublications: Publication[] = [];
     
     searchQuery = '';
     sortBy = 'recent';
+
+    // Pagination
+    currentPage = 1;
+    itemsPerPage = 9;
+    totalPages = 1;
+    paginatedPublications: Publication[] = [];
+
+    constructor() {
+        this.seo.setPageMeta('Agro-Échos', "L'actualité de l'agroécologie en Afrique de l'Ouest");
+    }
 
     ngOnInit(): void {
         this.publicationService.getPublications().subscribe(docs => {
@@ -31,7 +45,6 @@ export class AgroEchoPagesComponent implements OnInit {
     filterPublications(): void {
         let filtered = [...this.publications];
 
-        // Apply search filter
         if (this.searchQuery.trim()) {
             const query = this.searchQuery.toLowerCase();
             filtered = filtered.filter(p => 
@@ -42,7 +55,6 @@ export class AgroEchoPagesComponent implements OnInit {
             );
         }
 
-        // Apply sort
         switch (this.sortBy) {
             case 'recent':
                 filtered = filtered.sort((a, b) => 
@@ -64,6 +76,20 @@ export class AgroEchoPagesComponent implements OnInit {
         }
 
         this.filteredPublications = filtered;
+        this.currentPage = 1;
+        this.updatePagination();
+    }
+
+    updatePagination(): void {
+        this.totalPages = Math.max(1, Math.ceil(this.filteredPublications.length / this.itemsPerPage));
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        this.paginatedPublications = this.filteredPublications.slice(start, start + this.itemsPerPage);
+    }
+
+    onPageChange(page: number): void {
+        this.currentPage = page;
+        this.updatePagination();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     setSortBy(sort: string): void {

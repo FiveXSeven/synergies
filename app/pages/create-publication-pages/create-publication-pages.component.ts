@@ -4,31 +4,38 @@ import {
     FormGroup,
     Validators,
     ReactiveFormsModule,
-    FormControl,
 } from "@angular/forms";
 import { PublicationService } from "../../services/publication.service";
 import { AuthService } from "../../services/auth.service";
 import { CommonModule } from "@angular/common";
 import { Router, RouterLink } from "@angular/router";
+import { TranslatePipe } from "../../pipes/translate.pipe";
+import { SeoService } from "../../services/seo.service";
+
 @Component({
     selector: "app-create-publication-pages",
     standalone: true,
-    imports: [ReactiveFormsModule, CommonModule, RouterLink],
+    imports: [ReactiveFormsModule, CommonModule, RouterLink, TranslatePipe],
     templateUrl: "./create-publication-pages.component.html",
     styleUrl: "./create-publication-pages.component.scss",
 })
 export class CreatePublicationPagesComponent implements OnInit {
     publicationForm: FormGroup;
     selectedFiles: FileList | null = null;
+    imagePreviews: string[] = [];
     isLoading = false;
     errorMessage: string | null = null;
     successMessage: string | null = null;
+
+    isEditMode = false;
+    publicationId: string | null = null;
 
     constructor(
         private fb: FormBuilder,
         private publicationService: PublicationService,
         private authService: AuthService,
-        private router: Router
+        private router: Router,
+        private seo: SeoService
     ) {
         const today = new Date().toISOString().split('T')[0];
         this.publicationForm = this.fb.group({
@@ -38,12 +45,10 @@ export class CreatePublicationPagesComponent implements OnInit {
             content: ["", Validators.required],
             location: ["", Validators.required],
             date: [today, Validators.required],
-            photos: [null, [Validators.required, this.maxFilesValidator(4)]], // Validateur pour les photos
+            photos: [null, [Validators.required, this.maxFilesValidator(4)]],
         });
+        this.seo.setPageMeta('Nouvelle Publication', 'Créez une nouvelle publication');
     }
-
-    isEditMode = false;
-    publicationId: string | null = null;
 
     ngOnInit(): void {
         this.router.routerState.root.queryParams.subscribe(params => {
@@ -51,6 +56,7 @@ export class CreatePublicationPagesComponent implements OnInit {
                 this.isEditMode = true;
                 this.publicationId = params['id'];
                 this.loadPublication(this.publicationId!);
+                this.seo.setPageMeta('Modifier Publication', 'Modifier votre publication');
             }
         });
     }
@@ -71,6 +77,10 @@ export class CreatePublicationPagesComponent implements OnInit {
                 this.publicationForm.get('photos')?.clearValidators();
                 this.publicationForm.get('photos')?.setValidators([this.maxFilesValidator(4)]);
                 this.publicationForm.get('photos')?.updateValueAndValidity();
+                // Show existing images as previews
+                if (pub.photoUrls && pub.photoUrls.length > 0) {
+                    this.imagePreviews = pub.photoUrls.map(p => this.publicationService.getImageUrl(p));
+                }
                 this.isLoading = false;
             },
             error: () => {
@@ -90,39 +100,27 @@ export class CreatePublicationPagesComponent implements OnInit {
             event.preventDefault();
             event.stopPropagation();
         }
-        console.log('onSubmit triggered');
         try {
             this.errorMessage = null;
             this.successMessage = null;
 
             if (this.publicationForm.invalid) {
-                console.warn('Form validation failed:');
-                Object.keys(this.publicationForm.controls).forEach(key => {
-                    const control = this.publicationForm.get(key);
-                    if (control?.invalid) {
-                        console.log(`- Control '${key}' is invalid. Errors:`, control.errors);
-                    }
-                });
                 this.markAllAsTouched();
                 this.errorMessage = "Veuillez corriger les erreurs dans le formulaire.";
                 return;
             }
 
             if (!this.isEditMode && (!this.selectedFiles || this.selectedFiles.length === 0)) {
-                console.log('No files selected in create mode');
                 this.errorMessage = "Veuillez sélectionner au moins une photo.";
                 this.publicationForm.get("photos")?.setErrors({ required: true });
                 return;
             }
 
             this.isLoading = true;
-            console.log('Loading set to true, processing data...');
             const formValue = this.publicationForm.value;
             
-            // Validate date
             const evtDate = new Date(formValue.date);
             if (isNaN(evtDate.getTime())) {
-                console.error('Invalid date entered:', formValue.date);
                 this.errorMessage = "La date saisie est invalide.";
                 this.isLoading = false;
                 return;
@@ -138,38 +136,32 @@ export class CreatePublicationPagesComponent implements OnInit {
                 userDisplayName: this.authService.currentUserValue?.name || this.authService.currentUserValue?.email || 'Anonyme'
             };
 
-            console.log('Sending publication data:', publicationData);
-            console.log('Files to upload:', this.selectedFiles);
-
             const action = this.isEditMode 
                 ? this.publicationService.updatePublication(this.publicationId!, publicationData, this.selectedFiles)
                 : this.publicationService.addPublication(publicationData, this.selectedFiles);
 
             action.subscribe({
-                next: (res) => {
-                    console.log('Publication action successful:', res);
+                next: () => {
                     this.successMessage = this.isEditMode ? "Publication mise à jour !" : "Publication ajoutée !";
                     if (!this.isEditMode) {
                         this.publicationForm.reset();
                         this.selectedFiles = null;
+                        this.imagePreviews = [];
                     }
                     this.isLoading = false;
                     setTimeout(() => this.router.navigate(['/board']), 1500);
                 },
                 error: (error: any) => {
-                    console.error('API Error details:', error);
                     this.errorMessage = `Erreur: ${error.error?.error || error.message || "Une erreur inconnue est survenue"}`;
                     this.isLoading = false;
                 }
             });
         } catch (err) {
-            console.error('Submission crash details:', err);
             this.errorMessage = "Une erreur critique est survenue lors de l'envoi du formulaire.";
             this.isLoading = false;
         }
     }
 
-    // Validateur personnalisé pour le nombre maximum de fichiers
     maxFilesValidator(max: number) {
         return (control: any): { [key: string]: any } | null => {
             const files = control.value as FileList;
@@ -183,12 +175,51 @@ export class CreatePublicationPagesComponent implements OnInit {
     onFileSelected(event: Event): void {
         const element = event.currentTarget as HTMLInputElement;
         this.selectedFiles = element.files;
-        console.log('Files selected:', this.selectedFiles);
         this.publicationForm.patchValue({ photos: this.selectedFiles });
         this.publicationForm.get("photos")?.updateValueAndValidity();
+        // Generate previews
+        this.imagePreviews = [];
+        if (this.selectedFiles) {
+            Array.from(this.selectedFiles).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e: any) => {
+                    this.imagePreviews.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
     }
 
-    // Marquer tous les champs comme "touchés"
+    onDragOver(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    onDrop(event: DragEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const files = event.dataTransfer?.files;
+        if (files && files.length > 0) {
+            this.selectedFiles = files;
+            this.publicationForm.patchValue({ photos: this.selectedFiles });
+            this.publicationForm.get("photos")?.updateValueAndValidity();
+            // Generate previews
+            this.imagePreviews = [];
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e: any) => {
+                    this.imagePreviews.push(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    removePreview(index: number): void {
+        this.imagePreviews.splice(index, 1);
+        // Note: Can't modify FileList directly, but preview removal gives visual feedback
+    }
+
     private markAllAsTouched(): void {
         Object.values(this.publicationForm.controls).forEach((control) => {
             control.markAsTouched();
