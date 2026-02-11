@@ -9,6 +9,10 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import fs from 'fs';
 import crypto from 'crypto';
+import helmet from 'helmet';
+import xss from 'xss';
+import { z } from 'zod';
+import cookieParser from 'cookie-parser';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +49,16 @@ const allowedOrigins = [
 if (process.env['ALLOWED_ORIGINS']) {
   process.env['ALLOWED_ORIGINS'].split(',').forEach(o => allowedOrigins.push(o.trim()));
 }
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "img-src": ["'self'", "data:", "blob:", "*"],
+    },
+  },
+}));
+
 app.use(cors({
   origin: (origin, callback) => {
     // Permettre les requêtes sans origin (Postman, curl, mobile apps)
@@ -60,16 +74,9 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 
-// --- FIX 13: Headers de sécurité (inline, pas besoin de helmet) ---
-app.use((req: any, res: any, next: any) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  next();
-});
+// Les headers de sécurité sont maintenant gérés par helmet
 
 // --- FIX 14: Servir les uploads avec headers sécurisés ---
 app.use('/uploads', (req: any, res: any, next: any) => {
@@ -166,8 +173,9 @@ function handleMulterError(err: any, req: any, res: any, next: any) {
 
 // --- Middleware d'authentification ---
 const authenticateToken = (req: any, res: any, next: any) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  // On vérifie d'abord le cookie, puis le header Authorization
+  const token = req.cookies.token || (req.headers['authorization'] && req.headers['authorization'].split(' ')[1]);
+  
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, SECRET, (err: any, user: any) => {
@@ -185,39 +193,41 @@ const requireAdmin = (req: any, res: any, next: any) => {
   next();
 };
 
-// --- FIX 15: Sanitization basique des inputs ---
-function sanitizeString(input: string): string {
+// --- FIX 15: Sanitization robuste avec la lib xss ---
+function sanitize(input: string): string {
   if (!input) return input;
-  return input
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+  return xss(input);
 }
+
+// --- Schemas de validation avec Zod ---
+const registerSchema = z.object({
+  email: z.string().email('Format d\'email invalide'),
+  pin: z.string().min(4, 'Le PIN doit contenir au moins 4 caractères'),
+  name: z.string().optional()
+});
+
+const loginSchema = z.object({
+  email: z.string().email('Format d\'email invalide'),
+  pin: z.string()
+});
+
+const publicationSchema = z.object({
+  title: z.string().min(3, 'Titre trop court'),
+  description: z.string().min(5, 'Description trop courte'),
+  content: z.string().optional(),
+  type: z.string(), // On peut affiner avec enum si besoin
+  location: z.string().optional(),
+  eventDate: z.string().optional().nullable(),
+  userDisplayName: z.string().optional()
+});
 
 // --- Routes ---
 
 // 1. Auth: Register (Set PIN)
 app.post('/api/auth/register', authRateLimiter, async (req: any, res: any): Promise<void> => {
   try {
-    const { email, pin, name } = req.body;
-    if (!email || !pin) {
-      res.status(400).json({ error: 'Email et PIN requis' });
-      return;
-    }
-
-    // Validation basique de l'email
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      res.status(400).json({ error: 'Format d\'email invalide' });
-      return;
-    }
-
-    // Validation du PIN (minimum 4 caractères)
-    if (typeof pin !== 'string' || pin.length < 4) {
-      res.status(400).json({ error: 'Le PIN doit contenir au moins 4 caractères' });
-      return;
-    }
+    const validatedData = registerSchema.parse(req.body);
+    const { email, pin, name } = validatedData;
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -235,9 +245,18 @@ app.post('/api/auth/register', authRateLimiter, async (req: any, res: any): Prom
     // @ts-ignore - au cas où la migration n'est pas encore faite
     const userRole = (user as any).role || 'user';
     const token = jwt.sign({ id: user.id, role: userRole }, SECRET, { expiresIn: '24h' });
+
+    // Envoi du token via cookie HttpOnly
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24h
+    });
+
     // FIX 11: Ne pas exposer le hash du PIN
     const { pin: _, ...safeUser } = user;
-    res.json({ token, user: { ...safeUser, role: userRole } });
+    res.json({ user: { ...safeUser, role: userRole } });
   } catch (error) {
     // FIX 18: Ne pas exposer les détails d'erreur
     console.error('Auth register error');
@@ -248,11 +267,8 @@ app.post('/api/auth/register', authRateLimiter, async (req: any, res: any): Prom
 // 2. Auth: Login
 app.post('/api/auth/login', authRateLimiter, async (req: any, res: any): Promise<void> => {
   try {
-    const { email, pin } = req.body;
-    if (!email || !pin) {
-      res.status(400).json({ error: 'Email et PIN requis' });
-      return;
-    }
+    const validatedData = loginSchema.parse(req.body);
+    const { email, pin } = validatedData;
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -272,9 +288,18 @@ app.post('/api/auth/login', authRateLimiter, async (req: any, res: any): Promise
     // @ts-ignore - au cas où la migration n'est pas encore faite
     const userRole = (user as any).role || 'user';
     const token = jwt.sign({ id: user.id, role: userRole }, SECRET, { expiresIn: '24h' });
+
+    // Envoi du token via cookie HttpOnly
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24h
+    });
+
     // FIX 11: Ne pas exposer le hash du PIN
     const { pin: _, ...safeUser } = user;
-    res.json({ token, user: { ...safeUser, role: userRole } });
+    res.json({ user: { ...safeUser, role: userRole } });
   } catch (error) {
     console.error('Auth login error');
     res.status(500).json({ error: 'Erreur interne du serveur' });
@@ -299,6 +324,12 @@ app.get('/api/auth/me', authenticateToken, async (req: any, res: any): Promise<v
   }
 });
 
+// 2.2 Auth: Logout
+app.post('/api/auth/logout', (req: any, res: any) => {
+  res.clearCookie('token');
+  res.json({ message: 'Déconnecté avec succès' });
+});
+
 // 3. Publications: Get All (with pagination & optional search)
 app.get('/api/publications', async (req: any, res: any): Promise<void> => {
   try {
@@ -313,7 +344,7 @@ app.get('/api/publications', async (req: any, res: any): Promise<void> => {
     if (userId) where.userId = userId;
     if (search) {
       // FIX 15: Sanitizer la recherche
-      const safeSearch = sanitizeString(search);
+      const safeSearch = sanitize(search);
       where.OR = [
         { title: { contains: safeSearch } },
         { description: { contains: safeSearch } },
@@ -364,11 +395,11 @@ app.get('/api/publications/:id', async (req: any, res: any): Promise<void> => {
     }
 
     const publication = await prisma.publication.findUnique({
-      where: { id }
+      where: { id },
     });
     
     if (!publication) {
-      res.status(404).json({ error: 'Publication non trouvée' });
+      res.status(404).json({ error: 'Publication not found' });
       return;
     }
 
@@ -379,7 +410,29 @@ app.get('/api/publications/:id', async (req: any, res: any): Promise<void> => {
     res.json(formatted);
   } catch (error) {
     console.error('Fetch publication error');
-    res.status(500).json({ error: 'Erreur lors de la récupération de la publication' });
+    res.status(500).json({ error: 'Failed to fetch publication' });
+  }
+});
+
+// Increment publication views
+app.post('/api/publications/:id/view', async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || typeof id !== 'string') {
+      res.status(400).json({ error: 'Invalid publication ID' });
+      return;
+    }
+
+    await prisma.publication.update({
+      where: { id },
+      data: { views: { increment: 1 } }
+    });
+
+    res.status(200).json({ message: 'View incremented' });
+  } catch (error) {
+    console.error('Increment views error:', error);
+    res.status(500).json({ error: 'Failed to increment views' });
   }
 });
 
@@ -402,23 +455,20 @@ app.get('/api/stats', authenticateToken, async (req: any, res: any): Promise<voi
 // 4. Publications: Create
 app.post('/api/publications', authenticateToken, upload.array('photos'), handleMulterError, async (req: any, res) => {
   try {
-    const { title, description, content, type, location, eventDate, userDisplayName } = req.body;
+    const validatedData = publicationSchema.parse(req.body);
+    const { title, description, content, type, location, eventDate, userDisplayName } = validatedData;
     const files = req.files as Express.Multer.File[];
     
-    if (!title || !description || !type) {
-      return res.status(400).json({ error: 'Titre, description et type sont requis' });
-    }
-
     const photoUrls = files.map(file => `/uploads/${file.filename}`);
 
     const publication = await prisma.publication.create({
       data: {
-        title: sanitizeString(title),
-        description: sanitizeString(description),
-        content: content ? sanitizeString(content) : "",
-        type,
-        location: location ? sanitizeString(location) : "",
-        userDisplayName: userDisplayName ? sanitizeString(userDisplayName) : 'Auteur',
+        title: sanitize(title),
+        description: sanitize(description),
+        content: content ? sanitize(content) : "",
+        type: type,
+        location: location ? sanitize(location) : "",
+        userDisplayName: userDisplayName ? sanitize(userDisplayName) : 'Auteur',
         userId: req.user.id,
         photoUrls: JSON.stringify(photoUrls),
         eventDate: eventDate ? new Date(eventDate) : null
@@ -458,11 +508,11 @@ app.put('/api/publications/:id', authenticateToken, upload.array('photos'), hand
     const updated = await prisma.publication.update({
       where: { id },
       data: {
-        title: title ? sanitizeString(title) : existing.title,
-        description: description ? sanitizeString(description) : existing.description,
-        content: content ? sanitizeString(content) : existing.content,
+        title: title ? sanitize(title) : existing.title,
+        description: description ? sanitize(description) : existing.description,
+        content: content ? sanitize(content) : existing.content,
         type: type || existing.type,
-        location: location ? sanitizeString(location) : existing.location,
+        location: location ? sanitize(location) : existing.location,
         photoUrls: JSON.stringify(photoUrls),
         eventDate: eventDate ? new Date(eventDate) : existing.eventDate
       }
@@ -550,8 +600,8 @@ app.post('/api/publications/:id/comments', commentRateLimiter, async (req: any, 
 
     const comment = await prisma.comment.create({
       data: {
-        authorName: sanitizeString(authorName.trim()),
-        content: sanitizeString(content.trim()),
+        authorName: sanitize(authorName.trim()),
+        content: sanitize(content.trim()),
         publicationId: id
       }
     });
@@ -578,6 +628,18 @@ app.delete('/api/comments/:commentId', authenticateToken, requireAdmin, async (r
     console.error('Delete comment error');
     res.status(500).json({ error: 'Erreur lors de la suppression du commentaire' });
   }
+});
+
+// Middleware global pour gérer les erreurs de validation Zod
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err instanceof z.ZodError) {
+    return res.status(400).json({ 
+      error: 'Erreur de validation', 
+      details: err.errors.map(e => e.message) 
+    });
+  }
+  console.error(err);
+  res.status(500).json({ error: 'Erreur interne du serveur' });
 });
 
 app.listen(PORT, () => {

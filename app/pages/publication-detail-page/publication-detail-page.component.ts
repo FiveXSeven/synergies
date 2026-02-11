@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, SecurityContext } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicationService } from '../../services/publication.service';
@@ -19,8 +20,10 @@ export class PublicationDetailPageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private publicationService = inject(PublicationService);
   private seo = inject(SeoService);
+  private sanitizer = inject(DomSanitizer);
   
   publication: Publication | null = null;
+  safeContent: SafeHtml | null = null;
   isLoading = true;
   errorMessage = '';
   selectedImage: string | null = null;
@@ -43,12 +46,22 @@ export class PublicationDetailPageComponent implements OnInit {
         if (typeof data.photoUrls === 'string') {
           this.publication.photoUrls = JSON.parse(data.photoUrls);
         }
+        
+        // Sécuriser le contenu riche
+        if (this.publication?.content) {
+          this.safeContent = this.sanitizer.bypassSecurityTrustHtml(this.publication.content);
+        }
+
         this.isLoading = false;
+        
+        // Handle view counting
+        this.checkAndView(id);
+
         // Set SEO meta
         this.seo.setPageMeta(
           data.title,
           data.description,
-          this.getImageUrl(data.photoUrls[0])
+          this.getImageUrl(data.photoUrls[0] || '')
         );
       },
       error: () => {
@@ -56,6 +69,27 @@ export class PublicationDetailPageComponent implements OnInit {
         this.isLoading = false;
       }
     });
+  }
+
+  private checkAndView(id: string): void {
+    if (typeof window === 'undefined') return;
+
+    const storageKey = `viewed_pub_${id}`;
+    const lastViewed = localStorage.getItem(storageKey);
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    if (!lastViewed || (now - parseInt(lastViewed)) > oneDay) {
+      this.publicationService.incrementViews(id).subscribe({
+        next: () => {
+          localStorage.setItem(storageKey, now.toString());
+          if (this.publication && this.publication.id === id) {
+            this.publication.views = (this.publication.views || 0) + 1;
+          }
+        },
+        error: (err) => console.error('Failed to increment views:', err)
+      });
+    }
   }
 
   getImageUrl(path: string): string {

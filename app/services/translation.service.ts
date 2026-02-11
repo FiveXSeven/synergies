@@ -143,6 +143,7 @@ const TRANSLATIONS: { [lang: string]: { [key: string]: string } } = {
         'detail.backHome': "Retour à l'accueil",
         'detail.agro': 'Agro Échos',
         'detail.reportage': 'Publi-reportage',
+        'detail.views': 'vues',
         // Recent posts
         'recent.tag': 'Dernières Publications',
         'recent.title': 'Restez informé des actualités agroécologiques',
@@ -343,6 +344,7 @@ const TRANSLATIONS: { [lang: string]: { [key: string]: string } } = {
         'detail.backHome': 'Back to home',
         'detail.agro': 'Agro News',
         'detail.reportage': 'Report',
+        'detail.views': 'views',
         // Recent posts
         'recent.tag': 'Latest Publications',
         'recent.title': 'Stay informed about agroecological news',

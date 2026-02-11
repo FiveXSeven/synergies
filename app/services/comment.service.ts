@@ -16,12 +16,6 @@ export class CommentService {
     private http = inject(HttpClient);
     private apiUrl = environment.apiUrl;
 
-    private getAuthHeaders(): HttpHeaders {
-        return new HttpHeaders({
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        });
-    }
-
     getComments(publicationId: string): Observable<Comment[]> {
         return this.http.get<Comment[]>(`${this.apiUrl}/publications/${publicationId}/comments`);
     }
@@ -35,7 +29,7 @@ export class CommentService {
 
     deleteComment(commentId: string): Observable<any> {
         return this.http.delete(`${this.apiUrl}/comments/${commentId}`, {
-            headers: this.getAuthHeaders()
+            withCredentials: true
         });
     }
 }

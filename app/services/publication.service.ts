@@ -29,11 +29,7 @@ export class PublicationService {
     private authService = inject(AuthService);
     private apiUrl = `${environment.apiUrl}/publications`;
 
-    private getAuthHeaders(): HttpHeaders {
-        return new HttpHeaders({
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        });
-    }
+    // Shared utility: get image URL
 
     // Get all publications (legacy compatibility - returns flat array)
     getPublications(): Observable<Publication[]> {
@@ -64,10 +60,18 @@ export class PublicationService {
         return this.http.get<Publication>(`${this.apiUrl}/${id}`);
     }
 
+    getPublication(id: string): Observable<Publication> {
+    return this.http.get<Publication>(`${this.apiUrl}/${id}`);
+  }
+
+  incrementViews(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${id}/view`, {});
+  }
+
     // Dashboard stats
     getStats(): Observable<DashboardStats> {
         return this.http.get<DashboardStats>(`${environment.apiUrl}/stats`, {
-            headers: this.getAuthHeaders()
+            withCredentials: true
         });
     }
 
@@ -96,7 +100,7 @@ export class PublicationService {
             });
         }
 
-        return this.http.post<Publication>(this.apiUrl, formData, { headers: this.getAuthHeaders() });
+        return this.http.post<Publication>(this.apiUrl, formData, { withCredentials: true });
     }
 
     updatePublication(
@@ -125,11 +129,11 @@ export class PublicationService {
             });
         }
 
-        return this.http.put<Publication>(`${this.apiUrl}/${id}`, formData, { headers: this.getAuthHeaders() });
+        return this.http.put<Publication>(`${this.apiUrl}/${id}`, formData, { withCredentials: true });
     }
 
     deletePublication(id: string): Observable<any> {
-        return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getAuthHeaders() });
+        return this.http.delete(`${this.apiUrl}/${id}`, { withCredentials: true });
     }
 
     // Shared utility: get image URL

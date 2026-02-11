@@ -8,6 +8,14 @@
     padding: 0;
 }
 
+:root {
+  --primary-color: #2e7d32;
+  --secondary-color: #8bc34a;
+  --accent-color: #f9a826;
+  --text-color: #333;
+  --bg-color: #f5f7f0;
+}
+
 body {
     font-family: "Epilogue", sans-serif;
     line-height: 1.6;
@@ -31,4 +39,23 @@ li {
 .mainContainer {
     padding-left: 50px;
     padding-right: 50px;
+}
+
+/* Skeleton Loading */
+.skeleton {
+  background: #edf2f7;
+  background: linear-gradient(
+    90deg,
+    #edf2f7 25%,
+    var(--bg-color) 50%,
+    #edf2f7 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

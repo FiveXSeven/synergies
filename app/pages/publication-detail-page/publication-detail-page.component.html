@@ -15,6 +15,7 @@
       <div class="hero-footer anim-up delay-3">
         <span class="location"><i class="fas fa-map-marker-alt"></i> {{ publication.location }}</span>
         <span class="author"><i class="fas fa-user"></i> {{ publication.userDisplayName || 'Synergies Africa' }}</span>
+        <span class="views" *ngIf="publication.views"><i class="fas fa-eye"></i> {{ publication.views }} {{ 'detail.views' | translate }}</span>
       </div>
     </div>
   </header>
@@ -28,7 +29,7 @@
           <p>{{ publication.description }}</p>
         </div>
         <div class="article-divider"></div>
-        <div class="article-body" [innerHTML]="publication.content"></div>
+        <div class="article-body" [innerHTML]="safeContent"></div>
 
         <!-- Social Share -->
         <app-social-share [url]="shareUrl" [title]="publication.title" />
@@ -104,11 +105,23 @@
   </button>
 </div>
 
-<!-- Loading State -->
-<div class="loading-state" *ngIf="isLoading">
-  <div class="loading-spinner">
-    <div class="spinner"></div>
-    <p>{{ 'detail.loading' | translate }}</p>
+<!-- Skeleton Loading State -->
+<div class="detail-loading-skeleton" *ngIf="isLoading">
+  <div class="skeleton-hero skeleton"></div>
+  <div class="detail-content">
+    <div class="content-layout">
+      <div class="main-article">
+        <div class="skeleton-title skeleton"></div>
+        <div class="skeleton-meta skeleton"></div>
+        <div class="skeleton-text skeleton"></div>
+        <div class="skeleton-text skeleton"></div>
+        <div class="skeleton-text skeleton" style="width: 60%"></div>
+      </div>
+      <aside class="article-sidebar">
+        <div class="sidebar-card skeleton" style="height: 200px"></div>
+        <div class="sidebar-card skeleton" style="height: 150px"></div>
+      </aside>
+    </div>
   </div>
 </div>
 

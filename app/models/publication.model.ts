@@ -10,4 +10,5 @@ export interface Publication {
     createdAt: Date | any;
     userId: string;
     userDisplayName?: string;
+    views?: number;
 }

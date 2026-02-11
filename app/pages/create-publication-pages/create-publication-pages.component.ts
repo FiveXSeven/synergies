@@ -8,7 +8,7 @@ import {
 import { PublicationService } from "../../services/publication.service";
 import { AuthService } from "../../services/auth.service";
 import { CommonModule } from "@angular/common";
-import { Router, RouterLink } from "@angular/router";
+import { Router, RouterLink, ActivatedRoute } from "@angular/router";
 import { TranslatePipe } from "../../pipes/translate.pipe";
 import { SeoService } from "../../services/seo.service";
 
@@ -35,6 +35,7 @@ export class CreatePublicationPagesComponent implements OnInit {
         private publicationService: PublicationService,
         private authService: AuthService,
         private router: Router,
+        private route: ActivatedRoute,
         private seo: SeoService
     ) {
         const today = new Date().toISOString().split('T')[0];
@@ -51,7 +52,7 @@ export class CreatePublicationPagesComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.router.routerState.root.queryParams.subscribe(params => {
+        this.route.queryParams.subscribe(params => {
             if (params['id']) {
                 this.isEditMode = true;
                 this.publicationId = params['id'];

@@ -21,12 +21,13 @@ export class NavbarComponent implements OnDestroy {
     showLogoutConfirm = false;
     showSearch = false;
     searchQuery = '';
+    private sub!: Subscription;
+
     authService = inject(AuthService);
     translationService = inject(TranslationService);
     user$: Observable<User | null> = this.authService.currentUser$;
     router = inject(Router);
     currentLang = this.translationService.currentLang;
-    private sub: Subscription;
 
     constructor() {
         this.sub = this.translationService.currentLang$.subscribe(lang => this.currentLang = lang);
